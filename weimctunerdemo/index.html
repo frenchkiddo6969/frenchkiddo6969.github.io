@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>what the fuck is this</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @font-face {
+            font-family: 'FMDisplay';
+            src: url('https://files.catbox.moe/uk2ayp.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .tuner-container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tuner-header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tuner-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #4cc9f0;
+        }
+        
+        .tuner-status {
+            font-size: 0.9rem;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        
+        .tuner-display {
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(10, 15, 30, 0.5);
+            position: relative;
+        }
+        
+        .station-name {
+            font-family: 'FMDisplay', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+        }
+        
+        .frequency-display {
+            font-family: 'FMDisplay', 'Courier New', monospace;
+            font-size: 5rem;
+            font-weight: 300;
+            margin: 20px 0;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        
+        .frequency-unit {
+            font-size: 1.5rem;
+            color: #4cc9f0;
+            margin-left: 5px;
+            vertical-align: super;
+        }
+        
+        .signal-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .signal-item {
+            text-align: center;
+            padding: 8px 15px;
+            background: rgba(64, 156, 255, 0.1);
+            border-radius: 8px;
+            min-width: 140px;
+        }
+        
+        .signal-label {
+            font-size: 0.9rem;
+            color: #a0c6ff;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .signal-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .signal-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 25px;
+            overflow: hidden;
+        }
+        
+        .signal-level {
+            height: 100%;
+            background: linear-gradient(90deg, #ff3c00, #ff8c00, #4cc9f0);
+            border-radius: 4px;
+            width: 75%;
+            transition: width 0.5s ease;
+        }
+        
+        .tuner-controls {
+            padding: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
+        .manual-frequency {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-group h3 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #4cc9f0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .freq-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .freq-input-container input {
+            flex: 1;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-align: center;
+            outline: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .freq-input-container input:focus {
+            border-color: #4cc9f0;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+        }
+        
+        .freq-input-container button {
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: none;
+            background: #4cc9f0;
+            color: #16213e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .freq-input-container button:hover {
+            background: #3aa8cc;
+            transform: scale(1.05);
+        }
+        
+        .tuning-controls {
+            flex: 2;
+            min-width: 400px;
+        }
+        
+        .tuning-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .tuning-btn {
+            padding: 15px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tuning-btn:hover {
+            background: rgba(76, 201, 240, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .tuning-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .preset-stations {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .preset-btn {
+            padding: 18px 10px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .preset-btn:hover {
+            background: rgba(76, 201, 240, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .preset-btn.active {
+            background: rgba(76, 201, 240, 0.3);
+            border-color: #4cc9f0;
+            box-shadow: 0 0 15px rgba(76, 201, 240, 0.3);
+        }
+        
+        .preset-freq {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4cc9f0;
+        }
+        
+        .preset-name {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .radiotext-container {
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .radiotext-display {
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .radiotext-scroll {
+            display: inline-block;
+            padding-left: 100%;
+            animation: scrollText 20s linear infinite;
+            font-size: 1.2rem;
+            color: #a9d6e5;
+        }
+        
+        @keyframes scrollText {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .volume-control {
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .volume-label {
+            font-size: 1.1rem;
+            color: #4cc9f0;
+        }
+        
+        .volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4cc9f0;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+        }
+        
+        /* Static visualization effect */
+        .static-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.05),
+                rgba(0, 0, 0, 0.05) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .static-overlay.active {
+            opacity: 1;
+            animation: staticFlicker 0.1s infinite;
+        }
+        
+        @keyframes staticFlicker {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.7; }
+        }
+        
+        @media (max-width: 900px) {
+            .tuner-controls {
+                flex-direction: column;
+            }
+            
+            .frequency-display {
+                font-size: 4rem;
+            }
+            
+            .station-name {
+                font-size: 2rem;
+            }
+            
+            .signal-info {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 500px) {
+            .frequency-display {
+                font-size: 3rem;
+            }
+            
+            .tuning-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .presets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tuner-container">
+        <!-- Static visualization overlay -->
+        <div class="static-overlay" id="static-overlay"></div>
+        
+        <div class="tuner-header">
+            <div class="tuner-title">what the fuck is this</div>
+            <div class="tuner-status">
+                <a href="https://radiolista.pl/list/1105" target="_blank">https://radiolista.pl/list/1105</a>
+              </div>
+        </div>
+        
+        <div class="tuner-display">
+            <div class="station-name" id="station-name">LITTORAL</div>
+            <div class="frequency-display">95.900<span class="frequency-unit">MHz</span></div>
+            
+            <div class="signal-info">
+                <div class="signal-item">
+                    <div class="signal-label">SNR</div>
+                    <div class="signal-value" id="snr-value">34.6 dB</div>
+                </div>
+                <div class="signal-item">
+                    <div class="signal-label">LEVEL</div>
+                    <div class="signal-value" id="level-value">-7 dB</div>
+                </div>
+            </div>
+            
+            <div class="signal-bar">
+                <div class="signal-level" id="signal-level"></div>
+            </div>
+        </div>
+        
+        <div class="tuner-controls">
+            <div class="manual-frequency control-group">
+                <h3>Manual Frequency</h3>
+                <div class="freq-input-container">
+                    <input type="text" id="freq-input" value="95.900">
+                    <button id="set-freq">TUNE</button>
+                </div>
+            </div>
+            
+            <div class="tuning-controls control-group">
+                <h3>Tuning Controls</h3>
+                <div class="tuning-buttons">
+                    <button class="tuning-btn" id="fine-down">
+                        <i class="fas fa-chevron-left"></i>
+                        <span>FINE DOWN</span>
+                        <span>-0.1 MHz</span>
+                    </button>
+                    <button class="tuning-btn" id="coarse-down">
+                        <i class="fas fa-angle-double-left"></i>
+                        <span>COARSE DOWN</span>
+                        <span>-1.0 MHz</span>
+                    </button>
+                    <button class="tuning-btn" id="coarse-up">
+                        <i class="fas fa-angle-double-right"></i>
+                        <span>COARSE UP</span>
+                        <span>+1.0 MHz</span>
+                    </button>
+                    <button class="tuning-btn" id="fine-up">
+                        <i class="fas fa-chevron-right"></i>
+                        <span>FINE UP</span>
+                        <span>+0.1 MHz</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="preset-stations control-group">
+                <h3>Preset Stations</h3>
+                <div class="presets-grid">
+                    <button class="preset-btn" data-freq="87.500">
+                        <div class="preset-freq">87.500</div>
+                        <div class="preset-name">Start Of Band</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="radiotext-container">
+            <div class="radiotext-display">
+                <div class="radiotext-scroll" id="radiotext">Littoral FM - Narbonne [F] • Broadcasting at 0.5 kW [V] • Serving the Mediterranean coast</div>
+            </div>
+        </div>
+        
+        <div class="volume-control">
+            <div class="volume-label">VOLUME:</div>
+            <input type="range" min="0" max="1" step="0.05" value="0.7" class="volume-slider" id="volume">
+        </div>
+    </div>
+    
+    <!-- Audio elements -->
+    <audio id="player"></audio>
+    <audio id="static-player" loop>
+        <source src="https://files.catbox.moe/yxp85z.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Station data with live stream URLs
+        const stations = {
+            '87.500': {
+                name: 'NO RDS',
+                stream: 'https://admin.stream.rinse.fm/proxy/rinse_uk/stream',
+                radiotext: '',
+                signalStrength: 37,
+                staticLevel: 0.2
+            },
+            '87.700': {
+                name: 'FUN',
+                stream: 'https://icecast.funradio.fr/fun-1-44-128',
+                radiotext: '',
+                signalStrength: 60,
+                staticLevel: 0
+            },
+            '88.100': {
+                name: 'INTER',
+                stream: 'https://icecast.radiofrance.fr/franceinter-midfi.mp3',
+                radiotext: '',
+                signalStrength: 95,
+                staticLevel: 0
+            },
+            '88.600': {
+                name: 'NO RDS',
+                stream: 'https://sc.creacast.com/rts-national',
+                radiotext: '',
+                signalStrength: 21,
+                staticLevel: 1
+            },
+            '88.800': {
+                name: 'KOMRSIAL',
+                stream: 'https://radio.soupco.net:8443/komersial',
+                radiotext: '',
+                signalStrength: 60,
+                staticLevel: 0
+            },
+            '89.400': {
+                name: 'IRIS89.4',
+                stream: 'https://vocaloid.radioca.st/stream',
+                radiotext: '',
+                signalStrength: 49,
+                staticLevel: 0
+            },
+            '89.700': {
+                name: 'NO RDS',
+                stream: 'https://novazz.ice.infomaniak.ch/novazz-128.mp3',
+                radiotext: '',
+                signalStrength: 21,
+                staticLevel: 1
+            },
+            '89.900': {
+                name: 'FREQ 3',
+                stream: 'https://imagine.net-radio.fr/z_frequence3-128.mp3',
+                radiotext: '',
+                signalStrength: 54,
+                staticLevel: 0
+            },
+            '90.300': {
+                name: 'FG.',
+                stream: 'https://radiofg.impek.com/fg.mp3',
+                radiotext: '',
+                signalStrength: 65,
+                staticLevel: 0
+            },
+            '90.700': {
+                name: 'FUNADOS',
+                stream: 'https://funados.ice.infomaniak.ch/funados.mp3',
+                radiotext: '',
+                signalStrength: 65,
+                staticLevel: 0
+            },
+            '91.200': {
+                name: 'CLASSIQ',
+                stream: 'https://str0.creacast.com/classique1',
+                radiotext: '',
+                signalStrength: 54,
+                staticLevel: 0
+            },
+            '92.100': {
+                name: 'NOVA',
+                stream: 'https://novazz.ice.infomaniak.ch/novazz-128.mp3',
+                radiotext: '',
+                signalStrength: 49,
+                staticLevel: 0.000001
+            },
+            '92.500': {
+                name: 'CULTURE',
+                stream: 'https://icecast.radiofrance.fr/franceculture-midfi.mp3',
+                radiotext: '',
+                signalStrength: 95,
+                staticLevel: 0
+            },
+            '93.100': {
+                name: '100/100',
+                stream: 'https://100radio-carcassonne.ice.infomaniak.ch/100radio-carcassonne-128.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '93.600': {
+                name: 'MARITIMA',
+                stream: 'https://maritima936.ice.infomaniak.ch/maritima936-128.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '94.100': {
+                name: 'EUROPE 1',
+                stream: 'https://europe1.lmn.fm/europe1.aac',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '95.100': {
+                name: 'RTS',
+                stream: 'https://sc.creacast.com/rts-national',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '95.800': {
+                name: 'LATITUDE',
+                stream: 'https://latitude.ice.infomaniak.ch/latitude-128.mp3',
+                radiotext: '',
+                signalStrength: 53,
+                staticLevel: 0
+            },
+            '96.800': {
+                name: 'SKYROCK',
+                stream: 'https://skyrock.fm/stream.php/tunein16_64aac.aac',
+                radiotext: '',
+                signalStrength: 51,
+                staticLevel: 0
+            },
+            '97.200': {
+                name: 'CHERIEFM',
+                stream: 'https://scdn.nrjaudio.fm/audio1/fr/30201/mp3_128.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '97.600': {
+                name: 'HIT FM',
+                stream: 'https://online2.gkvr.ru:8000/hitfm_eka_64.aac',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '98.100': {
+                name: 'HOBOE',
+                stream: 'https://icecast-newradio.cdnvideo.ru/newradio3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '98.700': {
+                name: 'MARUSYA',
+                stream: 'https://listen.vdfm.ru:8000/marusya',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '99.200': {
+                name: 'RIRE &',
+                stream: 'https://scdn.nrjaudio.fm/adwz2/fr/30401/mp3_128.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '99.700': {
+                name: 'MUSIQUE',
+                stream: 'https://icecast.radiofrance.fr/francemusique-midfi.mp3',
+                radiotext: '',
+                signalStrength: 95,
+                staticLevel: 0
+            },
+            '100.300': {
+                name: 'EUROPE 2',
+                stream: 'https://europe2.lmn.fm/europe2.aac',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '100.800': {
+                name: 'DFM',
+                stream: 'https://listen.vdfm.ru:8000/dfm',
+                radiotext: '',
+                signalStrength: 65,
+                staticLevel: 0
+            },
+            '101.200': {
+                name: 'NRJ',
+                stream: 'https://scdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3',
+                radiotext: '',
+                signalStrength: 65,
+                staticLevel: 0
+            },
+            '101.700': {
+                name: 'CONTACT',
+                stream: 'https://radiocontact.ice.infomaniak.ch/radiocontact-mp3-128.mp3',
+                radiotext: '',
+                signalStrength: 59,
+                staticLevel: 0
+            },
+            '102.100': {
+                name: 'RADIO 1',
+                stream: 'https://radio.soupco.net:8443/obcradio1',
+                radiotext: '',
+                signalStrength: 65,
+                staticLevel: 0
+            },
+            '102.700': {
+                name: 'RADIO538',
+                stream: 'https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO538.mp3',
+                radiotext: '',
+                signalStrength: 95,
+                staticLevel: 0
+            },
+            '103.100': {
+                name: 'CAPITAL',
+                stream: 'https://radio.soupco.net:8443/cfmbr',
+                radiotext: '',
+                signalStrength: 95,
+                staticLevel: 0
+            },
+            '103.700': {
+                name: 'RadiusFM',
+                stream: 'https://stream2.datacenter.by/radiusfm_main',
+                radiotext: '',
+                signalStrength: 95,
+                staticLevel: 0
+            },
+            '104.300': {
+                name: 'RMC',
+                stream: 'https://ice.audionow.com/9325RMCInfo.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '104.700': {
+                name: 'SUDRADIO',
+                stream: 'https://start-sud.ice.infomaniak.ch/start-sud-high.aac',
+                radiotext: '',
+                signalStrength: 93,
+                staticLevel: 0
+            },
+            '105.100': {
+                name: 'INFO',
+                stream: 'https://direct.franceinfo.fr/live/franceinfo-midfi.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '105.500': {
+                name: 'NOSTALGI',
+                stream: 'https://h2oradio.net-radio.fr/nostalgie-tuner37.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '106.200': {
+                name: 'EUROPA',
+                stream: 'https://online-2.gkvr.ru:8000/europa_krd_64.aac',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '107.100': {
+                name: 'ONLYHITS',
+                stream: 'https://ais-sa3.cdnstream1.com/2627_128.mp3',
+                radiotext: '',
+                signalStrength: 57,
+                staticLevel: 0
+            },
+            '107.700': {
+                name: 'r 107.7',
+                stream: 'https://str0.creacast.com/radio_vinci_autoroutes_4',
+                radiotext: '',
+                signalStrength: 43,
+                staticLevel: 2
+            }
+        };
+
+        // DOM Elements
+        const stationName = document.getElementById('station-name');
+        const freqDisplay = document.querySelector('.frequency-display');
+        const freqInput = document.getElementById('freq-input');
+        const setFreqBtn = document.getElementById('set-freq');
+        const fineDownBtn = document.getElementById('fine-down');
+        const coarseDownBtn = document.getElementById('coarse-down');
+        const fineUpBtn = document.getElementById('fine-up');
+        const coarseUpBtn = document.getElementById('coarse-up');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const radiotextScroll = document.getElementById('radiotext');
+        const audioPlayer = document.getElementById('player');
+        const staticPlayer = document.getElementById('static-player');
+        const staticOverlay = document.getElementById('static-overlay');
+        const snrValue = document.getElementById('snr-value');
+        const levelValue = document.getElementById('level-value');
+        const signalLevel = document.getElementById('signal-level');
+        const volumeSlider = document.getElementById('volume');
+        
+        // Current state
+        let currentFrequency = 87.5;
+        let currentStation = null;
+        let userInteracted = false;
+        
+        // Initialize
+        function init() {
+            updateDisplay();
+            setActivePreset(currentFrequency);
+            updateRadiotext();
+            updateSignalDisplay();
+            
+            // Set initial volume
+            audioPlayer.volume = 0.7;
+            staticPlayer.volume = 0.3;
+            volumeSlider.value = 0.7;
+            
+            // Event listeners
+            setFreqBtn.addEventListener('click', () => {
+                userInteracted = true;
+                setManualFrequency();
+            });
+            
+            freqInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    userInteracted = true;
+                    setManualFrequency();
+                }
+            });
+            
+            fineDownBtn.addEventListener('click', () => {
+                userInteracted = true;
+                adjustFrequency(-0.1);
+            });
+            
+            coarseDownBtn.addEventListener('click', () => {
+                userInteracted = true;
+                adjustFrequency(-1.0);
+            });
+            
+            fineUpBtn.addEventListener('click', () => {
+                userInteracted = true;
+                adjustFrequency(0.1);
+            });
+            
+            coarseUpBtn.addEventListener('click', () => {
+                userInteracted = true;
+                adjustFrequency(1.0);
+            });
+            
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    userInteracted = true;
+                    const freq = parseFloat(btn.getAttribute('data-freq'));
+                    setFrequency(freq);
+                    setActivePreset(freq);
+                });
+            });
+            
+            volumeSlider.addEventListener('input', () => {
+                const volume = parseFloat(volumeSlider.value);
+                audioPlayer.volume = volume;
+                staticPlayer.volume = volume * 0.4; // Static volume is relative to main volume
+            });
+            
+            // Audio player events
+            audioPlayer.addEventListener('error', () => {
+                console.error('Error: Could not play station. The stream might be unavailable.');
+            });
+            
+            // Auto-play initial station after a brief delay
+            setTimeout(() => {
+                if (userInteracted) {
+                    playStation();
+                }
+            }, 1000);
+        }
+        
+        // Set frequency
+        function setFrequency(freq) {
+            // Constrain frequency to FM band (87.5 - 108.0)
+            currentFrequency = Math.max(87.5, Math.min(108.0, parseFloat(freq)));
+            
+            // Find station if exists
+            currentStation = stations[currentFrequency.toFixed(3)];
+            
+            updateDisplay();
+            updateRadiotext();
+            updateSignalDisplay();
+            
+            // Play the station automatically
+            playStation();
+        }
+        
+        // Adjust frequency by increment
+        function adjustFrequency(increment) {
+            setFrequency(currentFrequency + increment);
+        }
+        
+        // Set frequency from manual input
+        function setManualFrequency() {
+            const newFreq = parseFloat(freqInput.value);
+            if (!isNaN(newFreq) && newFreq >= 87.5 && newFreq <= 108.0) {
+                setFrequency(newFreq);
+                setActivePreset(newFreq);
+            } else {
+                alert('Invalid frequency. Please enter a value between 87.5 and 108.0');
+            }
+        }
+        
+        // Update display with current frequency and station
+        function updateDisplay() {
+            freqDisplay.innerHTML = `${currentFrequency.toFixed(3)}<span class="frequency-unit">MHz</span>`;
+            
+            if (currentStation) {
+                stationName.textContent = currentStation.name;
+            } else {
+                stationName.textContent = 'NO RDS';
+            }
+            
+            // Update input field
+            freqInput.value = currentFrequency.toFixed(3);
+        }
+        
+        // Update radiotext
+        function updateRadiotext() {
+            if (currentStation) {
+                radiotextScroll.textContent = currentStation.radiotext;
+            } else {
+                radiotextScroll.textContent = '';
+            }
+        }
+        
+        // Update signal display
+        function updateSignalDisplay() {
+            if (currentStation) {
+                const strength = currentStation.signalStrength;
+                signalLevel.style.width = `${strength}%`;
+                
+                // Calculate SNR and Level values
+                const snr = 20 + Math.round(strength / 5);
+                const level = -50 + Math.round(strength / 2);
+                
+                snrValue.textContent = `${snr}.0 dB SNR`;
+                levelValue.textContent = `${level} dBμV`;
+            } else {
+                signalLevel.style.width = '10%';
+                snrValue.textContent = '5.0 dB SNR';
+                levelValue.textContent = '-70 dBμV';
+            }
+        }
+        
+        // Set active preset button
+        function setActivePreset(freq) {
+            presetBtns.forEach(btn => {
+                const btnFreq = parseFloat(btn.getAttribute('data-freq'));
+                btn.classList.toggle('active', Math.abs(btnFreq - freq) < 0.01);
+            });
+        }
+        
+        // Play current station (with cache-busting to ensure streams reload)
+        function playStation() {
+            if (!userInteracted) return;
+            
+            // Always stop both players first
+            audioPlayer.pause();
+            staticPlayer.pause();
+            staticOverlay.classList.remove('active');
+            
+            if (currentStation) {
+                // For stations, always reload the stream with a cache-busting parameter
+                const cacheBuster = `?t=${Date.now()}`;
+                audioPlayer.src = currentStation.stream + cacheBuster;
+                
+                if (currentStation.staticLevel > 0) {
+                    // For stations with static
+                    audioPlayer.volume = volumeSlider.value * (1.0 - (currentStation.staticLevel * 0.5));
+                    staticPlayer.volume = volumeSlider.value * currentStation.staticLevel;
+                    
+                    // Show static visualization
+                    staticOverlay.classList.add('active');
+                    
+                    // Play both
+                    audioPlayer.play().catch(console.error);
+                    staticPlayer.play().catch(console.error);
+                } else {
+                    // For stations without static
+                    audioPlayer.volume = volumeSlider.value;
+                    audioPlayer.play().catch(console.error);
+                }
+            } else {
+                // For empty frequencies, play static only
+                staticPlayer.volume = volumeSlider.value * 0.3;
+                staticOverlay.classList.add('active');
+                staticPlayer.play().catch(console.error);
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
