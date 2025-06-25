@@ -52,7 +52,7 @@
       return (distPx * 0.1).toFixed(1);
     }
     function computeAzimuthCRS(crs1, crs2) {
-      let theta = Math.atan2(crs2.x - crs1.x, crs1.y - crs2.y) * 180/Math.PI;
+      let theta = Math.atan2(crs2.x - crs1.x, crs2.y - crs1.y) * 180 / Math.PI;
       theta = (theta + 360) % 360;
       return theta.toFixed(0);
     }
