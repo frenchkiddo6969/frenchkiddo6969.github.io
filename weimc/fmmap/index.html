@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>weimc - FM transmitter maps</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 5px; z-index: 1000; }
+    #top-panel button, #top-panel input { margin-right: 8px; height: 30px; }
+    #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
+    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 300px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; }
+    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.9); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+    th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
+    button.small { padding: 2px 5px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="top-panel">
+    <button id="load-db">Load DB</button>
+    <button id="save-db">Save DB</button>
+    <button id="add-tx">Add TX</button>
+    <input type="text" id="freq-filter" placeholder="Filter frequency (e.g. 105.7)" />
+    <button id="toggle-selected">Toggle Selected TXs</button>
+  </div>
+  <div id="tx-sheet"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // Initialize map
+    const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 2, zoomSnap: 0.1 });
+    const imgUrl = 'https://files.catbox.moe/3yeua0.png';
+    const bounds = [[0,0],[15904,15968]];
+    L.imageOverlay(imgUrl, bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    // Icons
+    const icons = {
+      low:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-lo.png', iconSize:[19,19], iconAnchor:[9.5,19] }),
+      med:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-med.png', iconSize:[23,23], iconAnchor:[11.5,23] }),
+      high: L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-hi.png', iconSize:[27,27], iconAnchor:[13.5,27] }),
+      rx:   L.icon({ iconUrl:'https://maps.fmdx.org/old/img/rx.png',    iconSize:[34,26], iconAnchor:[17,26] })
+    };
+
+    // State
+    let txList = [], rx = null, addingTX = false, filterFreq = null, showSelected = false;
+    const selected = new Set();
+
+    // Distance & Azimuth using CRS meters
+        // Distance & Azimuth using CRS meters with 1 px = 1 m real and scale 1:100 (1 m → 0.1 km per px)
+    function computeDistanceCRS(crs1, crs2) {
+      const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
+      const distPx = Math.sqrt(dx*dx + dy*dy); // in px
+      // 1 px = 1 m real, scale 1:100 ⇒ real m = distPx * 100
+      // km = (distPx * 100) / 1000 = distPx * 0.1
+      return (distPx * 0.1).toFixed(1); // km
+    }
+    function computeAzimuthCRS(crs1, crs2) {
+      let theta = Math.atan2(crs2.x - crs1.x, crs1.y - crs2.y) * 180/Math.PI;
+      theta = (theta + 360) % 360;
+      return theta.toFixed(0);
+    }
+
+    // DB Load/Save
+    document.getElementById('save-db').onclick = () => {
+      const saveable = txList.map(tx => ({
+        id: tx.id,
+        name: tx.name,
+        stations: tx.stations,
+        point: tx.point,
+        latlng: tx.latlng
+      }));
+      const blob = new Blob([JSON.stringify({txList: saveable})], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fm_tx_db.json';
+      a.click();
+    };
+    document.getElementById('load-db').onclick = async () => {
+  try {
+    const res = await fetch('https://github.com/frenchkiddo6969/weizkule.github.io/weimc/fmmap/txs.json');
+    const loaded = await res.json();
+    loaded.txList.forEach(t => {
+      if (t.point) {
+        createTX(t, true);
+      }
+    });
+  } catch (err) {
+    console.warn('Failed to load from URL, falling back to local file picker.');
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+    inp.onchange = e => {
+      const r = new FileReader();
+      r.onload = () => {
+        const loaded = JSON.parse(r.result);
+        loaded.txList.forEach(t => {
+          if (t.point) {
+            createTX(t, true);
+          }
+        });
+      };
+      r.readAsText(e.target.files[0]);
+    };
+    inp.click();
+  }
+};
+
+    // Add TX
+    document.getElementById('add-tx').onclick = () => { addingTX = true; map.getContainer().style.cursor='crosshair'; };
+    map.on('click', e => {
+      if(!addingTX) return;
+      const name = prompt('Site name:'); if(!name){addingTX=false;map.getContainer().style.cursor='';return;}
+      createTX({id:Date.now(),name,stations:[],point:map.latLngToLayerPoint(e.latlng)});
+      addingTX=false; map.getContainer().style.cursor='';
+    });
+
+    // Create TX
+    function createTX(data,load=false) {
+      const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
+      const crsPt = map.options.crs.project(latlng);
+      const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
+      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng] };
+      txList.push(tx); updateIcon(tx); attach(tx);
+      if(load) marker.fire('add');
+    }
+
+    // Events
+    function attach(tx) {
+      tx.marker.on('contextmenu', () => {
+        if (tx.line) {
+          map.removeLayer(tx.line);
+          tx.line = null;
+          selected.delete(tx.id);
+        } else {
+          drawTrail(tx);
+          selected.add(tx.id);
+        }
+      });
+      tx.marker.on('click', () => {
+        if (sheet.style.display === 'block') {
+          sheet.style.display = 'none';
+        } else {
+          openSheet(tx);
+        }
+      });
+      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); });
+      tx.marker.on('mouseover',e=>showTip(e,tx)); tx.marker.on('mouseout',hideTip);
+    }
+
+    // Draw trail
+    function drawTrail(tx) {
+      if(!rx) return;
+      if(tx.line) map.removeLayer(tx.line);
+      tx.line = L.polyline([rx.getLatLng(),tx.marker.getLatLng()],{color:'red',weight:2,opacity:0.7}).addTo(map);
+    }
+
+    // RX placement
+    map.on('contextmenu',e=>{
+      if(rx) return;
+      rx = L.marker(e.latlng,{icon:icons.rx,draggable:true}).addTo(map);
+      rx.crs = map.options.crs.project(e.latlng);
+      const pt = map.latLngToLayerPoint(e.latlng);
+      document.cookie=`rx_x=${pt.x};rx_y=${pt.y}`;
+      rx.on('dragend',()=>{
+        const ll=rx.getLatLng(); rx.crs=map.options.crs.project(ll);
+        txList.forEach(t=> t.line && drawTrail(t));
+      });
+    });
+
+    // Sheet UI
+    const sheet=document.getElementById('tx-sheet');
+    function openSheet(tx){
+      sheet.innerHTML=`<h4>${tx.name}</h4>`; sheet.style.display='block';
+      const table=document.createElement('table');
+      const hdr=table.insertRow(); ['Freq','Pol','Name','PI','kW',''].forEach(t=>hdr.insertCell().innerText=t);
+      tx.stations.forEach((s,i)=>{
+        const r=table.insertRow(); [s.freq,s.pol,s.name,s.pi,s.kw].forEach(v=>r.insertCell().innerText=v);
+        const c=r.insertCell(); const e=document.createElement('button');e.innerText='✎';e.className='small';e.onclick=()=>editStation(tx,i);
+        const d=document.createElement('button');d.innerText='🗑';d.className='small';d.onclick=()=>{tx.stations.splice(i,1);openSheet(tx);updateIcon(tx);} ;
+        c.append(e,d);
+      });
+      const add=document.createElement('button');add.innerText='Add station';add.onclick=()=>addStation(tx);
+      sheet.append(table,add);
+    }
+    function addStation(tx){ const f=parseFloat(prompt('Freq(87.5-108):')); if(isNaN(f)||f<87.5||f>108)return; const p=prompt('Pol(H,V,C,M,?):'); const n=prompt('Name:'); const pi=prompt('PI:'); const kw=parseFloat(prompt('kW:')); tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw});openSheet(tx);updateIcon(tx);}    
+    function editStation(tx,i){ const s=tx.stations[i]; const f=parseFloat(prompt('Freq:',s.freq)); if(isNaN(f)||f<87.5||f>108)return; s.freq=f; s.pol=prompt('Pol:',s.pol); s.name=prompt('Name:',s.name); s.pi=prompt('PI:',s.pi); s.kw=parseFloat(prompt('kW:',s.kw)); openSheet(tx);updateIcon(tx);}  
+
+    // Icon update
+    function updateIcon(tx){ const m=tx.stations.length?Math.max(...tx.stations.map(s=>s.kw)):0; let ic=icons.low; if(m>=5)ic=icons.high; else if(m>=0.5)ic=icons.med; tx.marker.setIcon(ic);}  
+
+    // Tooltips
+    const tip=document.createElement('div');tip.className='tooltip-box';document.body.append(tip);
+    function showTip(e,tx){ if(!rx)return; const di=computeDistanceCRS(rx.crs,tx.crs); const az=computeAzimuthCRS(rx.crs,tx.crs); tip.innerText=`${tx.name} – ${di} km – ${az}°`; tip.style.left=e.originalEvent.clientX+10+'px'; tip.style.top=e.originalEvent.clientY+10+'px'; tip.style.display='block'; }
+    function hideTip(){ tip.style.display='none'; }
+
+    // Filter & toggle
+    document.getElementById('freq-filter').oninput=e=>{ filterFreq=parseFloat(e.target.value)||null; txList.forEach(tx=>{ const ok=!filterFreq||tx.stations.some(s=>s.freq===filterFreq); ok?tx.marker.addTo(map):map.removeLayer(tx.marker); }); };
+    document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
+  </script>
+</body>
+</html>
