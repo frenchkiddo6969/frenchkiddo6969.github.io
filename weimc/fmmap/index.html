@@ -29,8 +29,12 @@
   <div id="tx-sheet"></div>
   <div id="map"></div>
 
+  <!-- Load Leaflet library -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <!-- Wrap your script inside window.onload -->
   <script>
+  window.onload = function () {
     const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 2, zoomSnap: 0.1 });
     const imgUrl = 'https://files.catbox.moe/peqzrl.png';
     const bounds = [[0,0],[15904,15968]];
@@ -163,9 +167,31 @@
       const del=document.createElement('button');del.innerText='Delete TX';del.style.marginLeft='10px';del.onclick=()=>{ map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
       sheet.append(table,add,del);
     }
+
     function addStation(tx){ const f=parseFloat(prompt('Freq(87.5-108):')); if(isNaN(f)||f<87.5||f>108)return; const p=prompt('Pol(H,V,C,M,?):'); const n=prompt('Name:'); const pi=prompt('PI:'); const kw=parseFloat(prompt('kW:')); tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw});openSheet(tx);updateIcon(tx);}    
     function editStation(tx,i){ const s=tx.stations[i]; const f=parseFloat(prompt('Freq:',s.freq)); if(isNaN(f)||f<87.5||f>108)return; s.freq=f; s.pol=prompt('Pol:',s.pol); s.name=prompt('Name:',s.name); s.pi=prompt('PI:',s.pi); s.kw=parseFloat(prompt('kW:',s.kw)); openSheet(tx);updateIcon(tx);}  
-    function updateIcon(tx){ const m=tx.stations.length?Math.max(...tx.stations.map(s=>s.kw)):0; let ic=icons.low; if(m>=5)ic=icons.high; else if(m>=0.5)ic=icons.med; tx.marker.setIcon(ic);}  
+
+    // ✅ Updated to reflect filter-specific icon logic
+    function updateIcon(tx){
+      let m = 0;
+      if (filterFreq || filterPI) {
+        const filteredStations = tx.stations.filter(s => {
+          const freqMatch = !filterFreq || s.freq === filterFreq;
+          const piMatch = !filterPI || (s.pi && s.pi.toUpperCase() === filterPI);
+          return freqMatch && piMatch;
+        });
+        if (filteredStations.length) {
+          m = Math.max(...filteredStations.map(s => s.kw || 0));
+        }
+      } else if (tx.stations.length) {
+        m = Math.max(...tx.stations.map(s => s.kw || 0));
+      }
+
+      let ic = icons.low;
+      if (m > 5) ic = icons.high;
+      else if (m > 0.5) ic = icons.med;
+      tx.marker.setIcon(ic);
+    }
 
     const tip=document.createElement('div');tip.className='tooltip-box';document.body.append(tip);
     function showTip(e,tx){ if(!rx)return; const di=computeDistanceCRS(rx.crs,tx.crs); const az=computeAzimuthCRS(rx.crs,tx.crs); tip.innerText=`${tx.name} – ${di} km – ${az}°`; tip.style.left=e.originalEvent.clientX+10+'px'; tip.style.top=e.originalEvent.clientY+10+'px'; tip.style.display='block'; }
@@ -181,6 +207,7 @@
         } else {
           if (map.hasLayer(tx.marker)) map.removeLayer(tx.marker);
         }
+        updateIcon(tx); // Recalculate icon per TX based on filters
       });
     }
 
@@ -196,6 +223,7 @@
     };
 
     document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
+  };
   </script>
 </body>
 </html>
