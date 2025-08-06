@@ -188,8 +188,8 @@
       }
 
       let ic = icons.low;
-      if (m > 5) ic = icons.high;
-      else if (m > 0.5) ic = icons.med;
+      if (m >= 5) ic = icons.high;
+      else if (m >= 0.5) ic = icons.med;
       tx.marker.setIcon(ic);
     }
 
