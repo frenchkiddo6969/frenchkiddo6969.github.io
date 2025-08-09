@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>weimc - FM transmitter maps</title>
+  <title>weimc - FM transmitter maps (updated)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
@@ -48,19 +48,8 @@
       rx:   L.icon({ iconUrl:'https://maps.fmdx.org/old/img/rx.png',    iconSize:[34,26], iconAnchor:[17,26] })
     };
 
-    // base offsets (where the icon's bottom-left corner is relative to the marker point)
-    const tooltipOffsets = {
-      lo:  { x: 6,  y: 18 },
-      med: { x: 8,  y: 22 },
-      hi:  { x: 9,  y: 26 }
-    };
-
-    // nudge values (hard-coded per your instruction)
-    const tooltipNudge = {
-      lo:  { x: 0,  y: -19 },
-      med: { x: 0,  y: -23 },
-      hi:  { x: 0,  y: -27 }
-    };
+    const tooltipOffsets = { lo:  { x: 6,  y: 18 }, med: { x: 8,  y: 22 }, hi:  { x: 9,  y: 26 } };
+    const tooltipNudge = { lo:  { x: 0,  y: -19 }, med: { x: 0,  y: -23 }, hi:  { x: 0,  y: -27 } };
 
     let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, showSelected = false;
     const selected = new Set();
@@ -74,6 +63,19 @@
       let theta = Math.atan2(crs2.x - crs1.x, crs2.y - crs1.y) * 180 / Math.PI;
       return ((theta + 360) % 360).toFixed(0);
     }
+
+    // ---- helper to normalize directional flags ----
+    function isDirectionalFlag(val) {
+      if (val === true) return true;
+      if (val === false || val === null || typeof val === 'undefined') return false;
+      if (typeof val === 'number') return val === 1;
+      if (typeof val === 'string') {
+        const v = val.trim().toUpperCase();
+        return (v === 'Y' || v === 'YES' || v === 'TRUE' || v === '1');
+      }
+      return false;
+    }
+    // ------------------------------------------------
 
     document.getElementById('save-db').onclick = () => {
       const saveable = txList.map(tx => ({ id: tx.id, name: tx.name, stations: tx.stations, point: tx.point, latlng: tx.latlng }));
@@ -112,12 +114,29 @@
     });
 
     function createTX(data,load=false) {
+      // normalize incoming station directional flags (important for DB-loaded entries)
+      if (data.stations && Array.isArray(data.stations)) {
+        data.stations.forEach(s => {
+          try {
+            s.directional = isDirectionalFlag(s.directional);
+            if (s.directionAngle !== undefined && s.directionAngle !== null) {
+              const na = parseInt(s.directionAngle, 10);
+              s.directionAngle = (!isNaN(na) && na >= 0 && na <= 359) ? na : null;
+            } else {
+              s.directionAngle = null;
+            }
+          } catch (e) {
+            s.directional = false;
+            s.directionAngle = null;
+          }
+        });
+      }
+
       const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
       const crsPt = map.options.crs.project(latlng);
       const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
       const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo' };
 
-      // ensure stations are sorted by freq ascending whenever a TX is created/loaded
       if (tx.stations && tx.stations.length) {
         tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
       }
@@ -158,7 +177,7 @@
       rx = L.marker(e.latlng,{icon:icons.rx,draggable:true}).addTo(map);
       rx.crs = map.options.crs.project(e.latlng);
       const pt = map.latLngToLayerPoint(e.latlng);
-      document.cookie = `rx_x=${pt.x};rx_y=${pt.y}`;
+      document.cookie = 'rx_x=' + pt.x + ';rx_y=' + pt.y;
       rx.on('dragend',()=>{
         const ll=rx.getLatLng(); rx.crs=map.options.crs.project(ll);
         txList.forEach(t=> t.line && drawTrail(t));
@@ -177,16 +196,11 @@
 
       tx.stations.forEach((s, i) => {
         const r = table.insertRow();
-        // Frequency clickable cell
         const freqCell = r.insertCell();
         const freqBtn = document.createElement('button');
         freqBtn.className = 'freq-btn';
         freqBtn.innerText = s.freq !== undefined ? String(s.freq) : '';
-        // toggle coverage on click
-        freqBtn.onclick = () => {
-          toggleCoverageForStation(tx, i, freqBtn);
-        };
-        // mark active if already present
+        freqBtn.onclick = () => { toggleCoverageForStation(tx, i, freqBtn); };
         if (tx.stationCircles[i]) freqBtn.classList.add('active');
         freqCell.appendChild(freqBtn);
 
@@ -200,7 +214,6 @@
         e.onclick = () => { editStation(tx, i); };
         const d = document.createElement('button'); d.innerText='🗑'; d.className='small';
         d.onclick = () => {
-          // remove any coverage circle for this station if exists
           if (tx.stationCircles[i]) {
             try { map.removeLayer(tx.stationCircles[i].layer); } catch(e) {}
             delete tx.stationCircles[i];
@@ -214,8 +227,7 @@
 
       const add = document.createElement('button'); add.innerText='Add station'; add.onclick=()=>addStation(tx);
       const del = document.createElement('button'); del.innerText='Delete TX'; del.style.marginLeft='10px';
-      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); // remove coverage circles
-        Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
+      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
       sheet.append(table, add, del);
     }
 
@@ -227,9 +239,20 @@
       const pi=prompt('PI:');
       const kwInput=prompt('kW:');
       const kw=parseFloat(kwInput);
-      tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw});
 
-      // sort stations by frequency ascending (87.5 -> 108.0)
+      // directional prompt (Y/N)
+      const dirFlag = (prompt('Make this station directional? (Y/N)') || '').trim().toUpperCase();
+      let directional = false, directionAngle = null;
+      if (dirFlag === 'Y' || dirFlag === 'YES') {
+        directional = true;
+        const angleInput = prompt('Direction angle (0-359, 0 = North, clockwise):', '0');
+        const angleNum = parseInt(angleInput, 10);
+        if (!isNaN(angleNum) && angleNum >= 0 && angleNum <= 359) directionAngle = angleNum;
+        else { directional = false; directionAngle = null; }
+      }
+
+      tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw, directional: directional, directionAngle: directionAngle});
+
       if (tx.stations && tx.stations.length) {
         tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
       }
@@ -249,7 +272,17 @@
       const kwInput = prompt('kW:', s.kw);
       s.kw = parseFloat(kwInput);
 
-      // re-sort after editing frequency
+      const dirFlag = (prompt('Make this station directional? (Y/N)', s.directional ? 'Y' : 'N') || '').trim().toUpperCase();
+      if (dirFlag === 'Y' || dirFlag === 'YES') {
+        s.directional = true;
+        const angleInput = prompt('Direction angle (0-359, 0 = North, clockwise):', (typeof s.directionAngle === 'number' && !isNaN(s.directionAngle)) ? String(s.directionAngle) : '0');
+        const angleNum = parseInt(angleInput, 10);
+        if (!isNaN(angleNum) && angleNum >= 0 && angleNum <= 359) s.directionAngle = angleNum; else { s.directional = false; s.directionAngle = null; }
+      } else {
+        s.directional = false;
+        s.directionAngle = null;
+      }
+
       if (tx.stations && tx.stations.length) {
         tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
       }
@@ -274,67 +307,53 @@
       else { tx.marker.setIcon(icons.low); tx.iconType = 'lo'; }
     }
 
-    // create tooltip element (hidden by default)
     const tip = document.createElement('div');
     tip.className = 'tooltip-box';
     document.body.append(tip);
     let hoveredTx = null;
 
-    // Position the tooltip so its TOP-LEFT corner aligns with marker bottom-left (uses marker.getElement())
     function positionTipForTx(tx) {
       if (!tx) return;
       if (!rx) return;
 
-      // Build content
-      const crs1 = rx.crs || map.options.crs.project(rx.getLatLng());
-      const crs2 = tx.crs || map.options.crs.project(tx.marker.getLatLng());
-      const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
+      const crsRx = rx.crs || map.options.crs.project(rx.getLatLng());
+      const crsTx = tx.crs || map.options.crs.project(tx.marker.getLatLng());
+      const dx = crsRx.x - crsTx.x, dy = crsRx.y - crsTx.y;
       const distKm = Math.sqrt(dx*dx + dy*dy) * 0.1;
       const distKmRounded = Math.round(distKm);
-      const az = computeAzimuthCRS(crs1, crs2);
+      // azimuth: compute bearing from TX -> RX (0 = north, clockwise)
+      const az = computeAzimuthCRS(crsTx, crsRx);
 
       tip.innerHTML = '';
       const nameNode = document.createTextNode(tx.name + ' – ');
       const kmSpan = document.createElement('span');
       kmSpan.textContent = distKmRounded + ' km';
-      if (distKmRounded >= 700) {
-        kmSpan.style.color = 'red';
-        kmSpan.style.fontWeight = 'bold';
-      } else if (distKmRounded >= 400) {
-        kmSpan.style.color = 'black';
-        kmSpan.style.fontWeight = 'bold';
-      } else {
-        kmSpan.style.color = 'black';
-        kmSpan.style.fontWeight = 'normal';
-      }
+      if (distKmRounded >= 700) { kmSpan.style.color = 'red'; kmSpan.style.fontWeight = 'bold'; }
+      else if (distKmRounded >= 400) { kmSpan.style.color = 'black'; kmSpan.style.fontWeight = 'bold'; }
+      else { kmSpan.style.color = 'black'; kmSpan.style.fontWeight = 'normal'; }
       const restNode = document.createTextNode(' – ' + az + '°');
       tip.appendChild(nameNode);
       tip.appendChild(kmSpan);
       tip.appendChild(restNode);
 
-      // Use the marker DOM element if available (most accurate)
       let clientX, clientY;
       const iconEl = (tx.marker && tx.marker.getElement) ? tx.marker.getElement() : null;
 
       if (iconEl && iconEl.getBoundingClientRect) {
         const rect = iconEl.getBoundingClientRect();
-        // bottom-left corner of the icon (client coords)
         clientX = rect.left;
         clientY = rect.top + rect.height;
       } else {
-        // fallback: container point -> client coords
         const pos = map.latLngToContainerPoint(tx.marker.getLatLng());
         const containerRect = map.getContainer().getBoundingClientRect();
         clientX = containerRect.left + pos.x;
         clientY = containerRect.top + pos.y;
       }
 
-      // pick offset by icon type (base offset) + nudge
       const iconType = tx.iconType || 'lo';
       const offset = tooltipOffsets[iconType] || {x:0,y:0};
       const nudge  = tooltipNudge[iconType]  || {x:0,y:0};
 
-      // TOP-LEFT of tooltip should sit at (clientX + offset.x + nudge.x, clientY + offset.y + nudge.y)
       tip.style.visibility = 'hidden';
       tip.style.display = 'block';
       const left = Math.round(clientX + offset.x + nudge.x);
@@ -345,23 +364,9 @@
       tip.style.opacity = '1';
     }
 
-    function showTip(tx) {
-      hoveredTx = tx;
-      if (!rx) return;
-      positionTipForTx(tx);
-    }
-
-    function hideTip() {
-      hoveredTx = null;
-      tip.style.display = 'none';
-      tip.style.opacity = '0';
-    }
-
-    function repositionTipIfNeeded(tx) {
-      if (hoveredTx && tx && hoveredTx.id === tx.id) positionTipForTx(tx);
-    }
-
-    // on map move/zoom reposition tooltip if needed
+    function showTip(tx) { hoveredTx = tx; if (!rx) return; positionTipForTx(tx); }
+    function hideTip() { hoveredTx = null; tip.style.display = 'none'; tip.style.opacity = '0'; }
+    function repositionTipIfNeeded(tx) { if (hoveredTx && tx && hoveredTx.id === tx.id) positionTipForTx(tx); }
     map.on('move zoom', () => { if (hoveredTx) positionTipForTx(hoveredTx); });
 
     function applyFilters() {
@@ -379,37 +384,171 @@
       });
     }
 
-    document.getElementById('freq-filter').oninput = e => {
-      filterFreq = parseFloat(e.target.value) || null;
-      applyFilters();
-    };
-
-    document.getElementById('pi-filter').oninput = e => {
-      const input = e.target.value.trim().toUpperCase();
-      filterPI = input.length ? input : null;
-      applyFilters();
-    };
-
-    document.getElementById('eirp-filter').oninput = e => {
-      filterEIRP = parseFloat(e.target.value) || null;
-      applyFilters();
-    };
+    document.getElementById('freq-filter').oninput = e => { filterFreq = parseFloat(e.target.value) || null; applyFilters(); };
+    document.getElementById('pi-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterPI = input.length ? input : null; applyFilters(); };
+    document.getElementById('eirp-filter').oninput = e => { filterEIRP = parseFloat(e.target.value) || null; applyFilters(); };
 
     document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
 
-    /********* Coverage circle logic (CRS-based) with custom radius formula *********/
+    /********* Coverage polygon logic (seeded, directional-only rear bulge) *********/
 
-    function createCoveragePolygon(centerLatLng, radiusKm, segments = 64) {
+    // seeded PRNG (mulberry32)
+    function seedFromString(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+      return h;
+    }
+    function mulberry32(a) {
+      return function() {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function degToRad(d){ return d * Math.PI/180; }
+
+    // createCoveragePolygon:
+    // - non-directional stations (directional === false) always get a regular slightly-jittered circle (no V/H special lobes)
+    // - directional stations get pol-specific shaping AND the focused rear bulge (placed at directionAngle + 180)
+    function createCoveragePolygon(centerLatLng, radiusKm, tx, stationIndex, directional=false, directionAngle=null, segments = 64) {
+      if (!radiusKm || radiusKm <= 0) return L.polygon([], {color:'blue', weight:2, opacity:0.6, fillOpacity:0.08});
+
+      const quant = Math.round(radiusKm * 10);
+      const seedStr = String(tx.id) + '_' + String(quant);
+      const rnd = mulberry32(seedFromString(seedStr));
+
       const centerCRS = map.options.crs.project(centerLatLng);
-      const radiusCRS = radiusKm * 10;
       const latlngs = [];
+      const R = radiusKm;
+
+      // normalize directionAngle if provided
+      let dirAngle = null;
+      if (typeof directionAngle === 'number' && !isNaN(directionAngle)) {
+        dirAngle = ((directionAngle % 360) + 360) % 360;
+      }
+
+      // If directional, place bulge behind the TX: bulgeDir = dirAngle + 180 (mod 360)
+      // Only compute bulgeDir when directional === true and dirAngle exists.
+      const bulgeDir = (directional === true && dirAngle !== null) ? ((dirAngle + 180) % 360) : null;
+
+      // tunables:
+      const coneDeg = 30;      // half-angle for the focused rear bulge (±coneDeg)
+      const maxBias  = 0.40;   // up to +40% at exact rear
+      const smallJitterRange = 0.06; // ±3% per-vertex jitter for non-directional / sides
+
       for (let i = 0; i < segments; i++) {
-        const a = (i / segments) * Math.PI * 2;
-        const dx = Math.cos(a) * radiusCRS;
-        const dy = Math.sin(a) * radiusCRS;
+        const a = (i / segments) * Math.PI * 2; // 0 = east, ccw positive
+        const angleDeg = (90 - (a * 180 / Math.PI) + 360) % 360; // 0 = north, clockwise
+
+        // compute baseRadius:
+        // - If NOT directional: keep baseRadius as a simple circular R (no pol-specific lobes).
+        // - If directional: apply pol-specific modulation (C/H/V) as before.
+        let baseRadius = R;
+        let pol = null;
+        try { const s = tx.stations && tx.stations[stationIndex]; if (s && s.pol) pol = String(s.pol).toUpperCase(); } catch (e) { pol = null; }
+
+        if (directional === true) {
+          // directional: allow polarization-specific shaping
+          if (pol === 'C' || pol === 'O') {
+            baseRadius = R;
+          } else if (pol === 'H') {
+            // H -> slightly uneven octagon
+            //  - creates an 8-sided modulation (vertices at 0,45,90,...)
+            //  - peaks at the octagon vertices and slightly smaller on the sides
+            //  - uses the same seeded rnd() for small, deterministic per-vertex jitter
+            const nearestVertex = Math.round(angleDeg / 45) * 45;
+            // minimal angular difference (0..180) to nearest vertex
+            let delta = Math.abs(((angleDeg - nearestVertex + 540) % 360) - 180);
+            if (delta > 180) delta = 360 - delta;
+            // t = 1 at a vertex, 0 at the side midpoint (22.5° away)
+            const t = 1 - Math.min(delta, 22.5) / 22.5;
+            // base octagon factor: varies modestly between ~0.94 (side) and ~1.06 (vertex)
+            const octFactor = 0.94 + 0.12 * t;
+            // small per-vertex jitter (seeded by rnd) to make it slightly uneven
+            const localJitter = 1 + (rnd() - 0.5) * 0.06; // ±3%
+            baseRadius = R * octFactor * localJitter;
+          } else if (pol === 'V') {
+            if (dirAngle === null) {
+              // if no explicit directionAngle provided, still use default V-shape behavior (rare)
+              const delta = Math.min(Math.abs(((angleDeg - 0 + 540) % 360) - 180), 180);
+              if (delta <= 90) baseRadius = R * 0.9;
+              else { const theta = a; const wFactor = 1 + 0.18 * Math.cos(4 * theta); baseRadius = R * wFactor * 0.85; }
+            } else {
+              const delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180);
+              if (delta <= 90) baseRadius = R * 0.9;
+              else { const relRad = degToRad(angleDeg - dirAngle + 90); const wFactor = 1 + 0.18 * Math.cos(4 * relRad); baseRadius = R * wFactor * 0.85; }
+            }
+          } else {
+            baseRadius = R;
+          }
+
+          // directional front/back smoothing (unchanged)
+          if (dirAngle !== null) {
+            let delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180); // 0 = front, 180 = back
+            const t = (Math.cos(degToRad(delta)) + 1) / 2;
+            const backMin = 0.2 * R;
+            baseRadius = backMin + (baseRadius - backMin) * t;
+          }
+        } else {
+          // NOT directional -> force circular base radius (no pol lobes)
+          baseRadius = R;
+        }
+
+        // default small jitter applied to all stations (C/H/V get slight unevenness even when non-directional)
+        const defaultJitter = 1 + (rnd() - 0.5) * smallJitterRange; // e.g. ±3%
+
+        // apply REAR bulge ONLY when directional === true and bulgeDir exists
+        let perturb = defaultJitter;
+        if (directional === true && bulgeDir !== null) {
+          // angular difference between this vertex and the bulge direction (0..180)
+          const raw = Math.abs(((angleDeg - bulgeDir + 360) % 360));
+          const angDiff = Math.min(raw, 360 - raw); // 0..180 where 0 = exact rear
+
+          if (angDiff <= coneDeg) {
+            // inside rear-focused cone: strongest at exact rear
+            const frac = 1 - (angDiff / coneDeg); // 1 at center, 0 at cone edge
+
+            // base bias for this vertex from the main rear peak
+            let biasMain = frac;
+
+            // occasionally create a double-bulge pattern: a second nearby peak
+            // this uses the same seeded rnd() so it's deterministic per-tx/quant
+            let combinedFrac = biasMain;
+            const dblChance = 0.35; // ~35% of bulges become double-bulges
+            if (rnd() < dblChance) {
+              // offset between 8° and 18° for the secondary bulge (randomized)
+              const offset = 8 + Math.floor(rnd() * 11);
+              const raw2 = Math.abs(((angleDeg - (bulgeDir + offset) + 360) % 360));
+              const angDiff2 = Math.min(raw2, 360 - raw2);
+              let frac2 = 0;
+              if (angDiff2 <= coneDeg) frac2 = 1 - (angDiff2 / coneDeg);
+              // combine by taking the max of the two proximity factors so we see twin peaks
+              combinedFrac = Math.max(biasMain, frac2);
+            }
+
+            const bias = 1 + maxBias * combinedFrac;
+            const localJitter = 1 + (rnd() - 0.5) * 0.08; // ±4%
+            perturb = bias * localJitter;
+          } else {
+            // outside cone: keep smooth small jitter only
+            perturb = defaultJitter;
+          }
+        } else {
+          // not directional: only small jitter (no bulge)
+          perturb = defaultJitter;
+        }
+
+        const r = Math.max(0.1, baseRadius * perturb);
+
+        // convert r (km) to CRS units (CRS uses 0.1 km per unit)
+        const dx = Math.cos(a) * r * 10;
+        const dy = Math.sin(a) * r * 10;
         const ptCRS = L.point(centerCRS.x + dx, centerCRS.y + dy);
         latlngs.push(map.options.crs.unproject(ptCRS));
       }
+
       return L.polygon(latlngs, { color: 'blue', weight: 2, opacity: 0.6, fillOpacity: 0.08 });
     }
 
@@ -426,15 +565,21 @@
       if (!s) return;
       const kw = Number(s.kw) || 0;
       const radiusKm = kW_to_km_radius(kw);
+      // remove existing
       if (tx.stationCircles && tx.stationCircles[stationIndex]) {
         try { map.removeLayer(tx.stationCircles[stationIndex].layer); } catch (e) {}
         delete tx.stationCircles[stationIndex];
         if (freqBtnElement) freqBtnElement.classList.remove('active');
         return;
       }
-      const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm);
+
+      // normalize directional flag for this station (handles 'Y'/'N' from DB)
+      const dirFlag = isDirectionalFlag(s.directional);
+
+      // create polygon using TX-level seeded shape (same EIRP -> same shape), but allow directional modification per-station
+      const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, stationIndex, dirFlag, s.directionAngle);
       poly.addTo(map);
-      tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng() };
+      tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s.directionAngle };
       if (freqBtnElement) freqBtnElement.classList.add('active');
     }
 
@@ -444,18 +589,17 @@
         const sc = tx.stationCircles[idx];
         if (!sc) return;
         try { map.removeLayer(sc.layer); } catch (e) {}
-        const newPoly = createCoveragePolygon(tx.marker.getLatLng(), sc.km);
-        newPoly.addTo(map);
-        tx.stationCircles[idx] = { layer: newPoly, km: sc.km, centerLatLng: tx.marker.getLatLng() };
+        const s = tx.stations[idx];
+        const radiusKm = sc.km || (s ? kW_to_km_radius(s.kw) : 0);
+        const dirFlag = isDirectionalFlag(s ? s.directional : false);
+        const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, idx, dirFlag, s && s.directionAngle);
+        poly.addTo(map);
+        tx.stationCircles[idx] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s && s.directionAngle };
       });
     }
 
-    function updateAllCoverage() {
-      txList.forEach(tx => updateCoverageForTX(tx));
-    }
-
-    map.on('zoomend', updateAllCoverage);
-    map.on('moveend', updateAllCoverage);
+    function updateAllCoverage() { txList.forEach(tx => updateCoverageForTX(tx)); }
+    map.on('zoomend', updateAllCoverage); map.on('moveend', updateAllCoverage);
 
     function removeAllCoverage() {
       txList.forEach(tx => {
