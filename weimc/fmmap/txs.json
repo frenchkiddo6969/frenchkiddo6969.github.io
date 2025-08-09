@@ -1,1 +1,545 @@
-{"txList":[{"id":1750808169354,"name":"Rottingem Zendmast","stations":[{"freq":88.7,"pol":"H","name":"SPO Radio 1","pi":"8201","kw":97},{"freq":90,"pol":"H","name":"SPO Radio 2","pi":"8202","kw":97},{"freq":99.7,"pol":"H","name":"Hit Radio SPO 3","pi":"8203","kw":97},{"freq":102.7,"pol":"H","name":"Radio 538","pi":"82C7","kw":97},{"freq":105.1,"pol":"H","name":"SPO Nieuws","pi":"8204","kw":79},{"freq":107.1,"pol":"V","name":"Nostalgie","pi":"8213","kw":3}],"point":{"x":1163,"y":774},"latlng":[11210,5186.25]},{"id":1750808428258,"name":"Doetinlingen","stations":[{"freq":98.7,"pol":"V","name":"Kapitaal.","pi":"874F","kw":0.04}],"point":{"x":1013,"y":124},"latlng":[11680,5008]},{"id":1750808466955,"name":"Coehuizen Hill","stations":[{"freq":97.2,"pol":"V","name":"Studio Rave","pi":"8742","kw":0.5},{"freq":98,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":5},{"freq":101.7,"pol":"V","name":"Jazz Radio","pi":"82FC","kw":0.5},{"freq":103.2,"pol":"V","name":"Volt Radio","pi":"87ED","kw":5}],"point":{"x":690,"y":589},"latlng":[11569.75,4896.25]},{"id":1750808548610,"name":"Haarmere Hill","stations":[{"freq":91.4,"pol":"V","name":"Radio FG.","pi":"822C","kw":7},{"freq":93.7,"pol":"V","name":"Fun Radio","pi":"8217","kw":7},{"freq":103.7,"pol":"V","name":"Virgin Radio","pi":"82C9","kw":1},{"freq":104.3,"pol":"V","name":"Uw Lokale","pi":"875D","kw":0.5},{"freq":106.7,"pol":"V","name":"Radio Komersial","pi":"8669","kw":1}],"point":{"x":1012,"y":793},"latlng":[11397.25,5072.25]},{"id":1750808687741,"name":"Doetinlingen","stations":[{"freq":88,"pol":"V","name":"Zero FM","pi":"8728","kw":2},{"freq":89.1,"pol":"V","name":"Metropool Radio","pi":"8797","kw":2},{"freq":90.7,"pol":"V","name":"MegaMusic","pi":"891C","kw":2},{"freq":100.8,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":8},{"freq":101.3,"pol":"V","name":"Ramadan FM","pi":"FFFF","kw":1}],"point":{"x":1572,"y":137},"latlng":[11659.25,4827]},{"id":1750808769111,"name":"Bolsvorden Hill","stations":[{"freq":89.6,"pol":"V","name":"Europa 1","pi":"82E1","kw":0.5},{"freq":91.9,"pol":"V","name":"Love FM","pi":"8731","kw":0.5},{"freq":94.1,"pol":"V","name":"Europa 2","pi":"82E2","kw":1},{"freq":95.8,"pol":"V","name":"Latitude","pi":"8733","kw":0.5},{"freq":100.2,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":8},{"freq":105.8,"pol":"C","name":"DFM","pi":"82DF","kw":10},{"freq":107.8,"pol":"V","name":"Radio City","pi":"872A","kw":1}],"point":{"x":1779,"y":118},"latlng":[11700.25,5220.5]},{"id":1750808907749,"name":"Vilren","stations":[{"freq":87.7,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":0.2},{"freq":92.2,"pol":"V","name":"Nostalgie","pi":"8213","kw":0.5},{"freq":94.3,"pol":"V","name":"DFM","pi":"82DF","kw":0.5},{"freq":95.5,"pol":"V","name":"999 FM","pi":"8882","kw":0.5},{"freq":100.8,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":0.1},{"freq":106.5,"pol":"V","name":"Latitude","pi":"8733","kw":0.5},{"freq":107.3,"pol":"V","name":"Europa 1","pi":"82E1","kw":0.5}],"point":{"x":1193,"y":469},"latlng":[11140,4134.75]},{"id":1750809025224,"name":"Tourstal Zendmast","stations":[{"freq":93.1,"pol":"V","name":"Fun Radio","pi":"8217","kw":0.5},{"freq":96,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":97.9,"pol":"V","name":"Radio FG.","pi":"822C","kw":1},{"freq":103.1,"pol":"V","name":"Centraal FM","pi":"8888","kw":1}],"point":{"x":1130,"y":534},"latlng":[11086.25,3986.5]},{"id":1750809030665,"name":"Pijnacker Zendmast","stations":[{"freq":90.2,"pol":"C","name":"SPO Radio 1","pi":"8201","kw":15},{"freq":93.5,"pol":"C","name":"SPO Radio 2","pi":"8202","kw":15},{"freq":97.1,"pol":"C","name":"Hit Radio SPO 3","pi":"8203","kw":15},{"freq":102.3,"pol":"C","name":"Radio 538","pi":"82C7","kw":10},{"freq":105.1,"pol":"C","name":"SPO Nieuws","pi":"8204","kw":10}],"point":{"x":1200,"y":466},"latlng":[11103.25,4004]},{"id":1750809192137,"name":"Zaltkerk","stations":[{"freq":91.6,"pol":"V","name":"Fun Radio","pi":"8217","kw":1},{"freq":100.3,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":103.5,"pol":"V","name":"SPO Nieuws","pi":"8204","kw":0.2}],"point":{"x":831,"y":329},"latlng":[11126.5,3295]},{"id":1750809252961,"name":"Zoetergraaf Zendmast","stations":[{"freq":90.1,"pol":"H","name":"SPO Radio 1","pi":"8201","kw":10},{"freq":94.7,"pol":"H","name":"SPO Radio 2","pi":"8202","kw":10},{"freq":101.7,"pol":"H","name":"Hit Radio SPO 3","pi":"8203","kw":10},{"freq":102.4,"pol":"H","name":"Radio 538","pi":"82C7","kw":5.8},{"freq":104.9,"pol":"H","name":"SPO Nieuws","pi":"8204","kw":5.4}],"point":{"x":461,"y":222},"latlng":[10805.75,3078.25]},{"id":1750809334410,"name":"Stawijk Zendmast","stations":[{"freq":87.6,"pol":"V","name":"SPO Radio 1","pi":"8201","kw":20},{"freq":90.6,"pol":"V","name":"SPO Radio 2","pi":"8202","kw":20},{"freq":98.7,"pol":"V","name":"Hit Radio SPO 3","pi":"8203","kw":20},{"freq":102.1,"pol":"V","name":"Radio 538","pi":"82C7","kw":20},{"freq":105.6,"pol":"V","name":"SPO Nieuws","pi":"8204","kw":17}],"point":{"x":643,"y":816},"latlng":[10223.75,4267]},{"id":1750809428351,"name":"Heusloon Zendmast","stations":[{"freq":88,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":88.8,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":1},{"freq":89.9,"pol":"V","name":"DFM","pi":"82DF","kw":1},{"freq":93,"pol":"V","name":"Radio FG.","pi":"822C","kw":1},{"freq":94.1,"pol":"V","name":"Europa 1","pi":"82E1","kw":1},{"freq":96.8,"pol":"V","name":"Fun Radio","pi":"8217","kw":1},{"freq":100.5,"pol":"V","name":"Europa 2","pi":"82E2","kw":1}],"point":{"x":85,"y":275},"latlng":[11512.5,3324.5]},{"id":1750809512211,"name":"Oosterhon Zendmast","stations":[{"freq":87.6,"pol":"H","name":"SPO Radio 1","pi":"8201","kw":50},{"freq":90.5,"pol":"H","name":"SPO Radio 2","pi":"8202","kw":50},{"freq":95.8,"pol":"H","name":"Hit Radio SPO 3","pi":"8203","kw":50},{"freq":102.6,"pol":"H","name":"Radio 538","pi":"82C7","kw":47}],"point":{"x":876,"y":-37},"latlng":[11590.5,3522.25]},{"id":1750809591937,"name":"Oosterhon 2","stations":[{"freq":105.7,"pol":"V","name":"SPO Nieuws","pi":"8204","kw":25}],"point":{"x":765,"y":136},"latlng":[11587.5,3520.5]},{"id":1750809634885,"name":"Nijselt Zendmast","stations":[{"freq":87.9,"pol":"H","name":"SPO Radio 1","pi":"8201","kw":12},{"freq":97.8,"pol":"H","name":"Hit Radio SPO 3","pi":"8203","kw":12},{"freq":101.2,"pol":"V","name":"DFM","pi":"82DF","kw":0.5},{"freq":102.3,"pol":"H","name":"Radio 538","pi":"82C7","kw":12},{"freq":104.2,"pol":"H","name":"SPO Radio 2","pi":"8202","kw":12},{"freq":104.9,"pol":"V","name":"SPO Nieuws","pi":"8204","kw":4}],"point":{"x":2053,"y":660},"latlng":[10396.75,5539]},{"id":1750809746579,"name":"New Benin","stations":[{"freq":87.5,"pol":"H","name":"CBSM Central R.","pi":"B201","kw":158}],"point":{"x":1835,"y":919},"latlng":[9861.75,5915]},{"id":1750809807018,"name":"Omigrad","stations":[{"freq":96.8,"pol":"C","name":"Yumor FM","pi":"88CF","kw":1},{"freq":104.2,"pol":"C","name":"Pervoe Setevoe","pi":"8862","kw":0.63},{"freq":105.3,"pol":"C","name":"SPO Nieuws","pi":"8204","kw":0.5},{"freq":105.9,"pol":"C","name":"Krasnaya Zvezda FM","pi":"88C1","kw":0.5}],"point":{"x":1477,"y":869},"latlng":[10097.75,2929.5]},{"id":1750809907917,"name":"Omigrad","stations":[{"freq":94.1,"pol":"V","name":"Fun Radio","pi":"8217","kw":0.5},{"freq":95,"pol":"V","name":"Europa 1","pi":"82E1","kw":0.5},{"freq":97.5,"pol":"V","name":"Europa 2","pi":"82E2","kw":0.5}],"point":{"x":1865,"y":858},"latlng":[10100.25,3013.5]},{"id":1750809957448,"name":"Appingemeer Zendmast","stations":[{"freq":90.8,"pol":"V","name":"SPO Radio 1","pi":"8201","kw":18},{"freq":93.1,"pol":"V","name":"SPO Radio 2","pi":"8202","kw":18},{"freq":102.5,"pol":"V","name":"Radio 538","pi":"82C7","kw":10},{"freq":103.4,"pol":"V","name":"Hit Radio SPO 3","pi":"8203","kw":18}],"point":{"x":1955,"y":908},"latlng":[10090.5,3071.5]},{"id":1750810028067,"name":"Ivanovskoe 2","stations":[{"freq":92.4,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":10},{"freq":97.9,"pol":"C","name":"ONR Omigrad Novosti Radio","pi":"84C1","kw":6.3},{"freq":99.2,"pol":"V","name":"Nostalgie","pi":"8213","kw":1},{"freq":107.9,"pol":"C","name":"Radio Komersial","pi":"8669","kw":0.5}],"point":{"x":1582,"y":827},"latlng":[10179.25,3038.5]},{"id":1750810077021,"name":"Ivanovskoe Zendmast","stations":[{"freq":87.9,"pol":"C","name":"DFM","pi":"82DF","kw":6.3},{"freq":88.3,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":1},{"freq":88.8,"pol":"C","name":"Radio 16","pi":"84F2","kw":6.3},{"freq":89.4,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":96.1,"pol":"C","name":"Rise FM","pi":"84F1","kw":6.3},{"freq":100.8,"pol":"V","name":"Radio FG.","pi":"822C","kw":1}],"point":{"x":1748,"y":700},"latlng":[10179.25,3047]},{"id":1750810179718,"name":"Antbeke Zendmast","stations":[{"freq":91.2,"pol":"V","name":"Fun Radio","pi":"8217","kw":1},{"freq":91.9,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":1},{"freq":99.5,"pol":"V","name":"Nostalgie","pi":"8213","kw":1},{"freq":104.7,"pol":"V","name":"Virgin Radio","pi":"82C9","kw":1}],"point":{"x":1802,"y":768},"latlng":[10391.25,3883.25]},{"id":1750810216206,"name":"Tongven Zendmast","stations":[{"freq":89,"pol":"V","name":"Radio FG.","pi":"822C","kw":1},{"freq":101.2,"pol":"V","name":"DFM","pi":"82DF","kw":1},{"freq":105.2,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":107.7,"pol":"V","name":"Text Radio","pi":"8789","kw":1}],"point":{"x":2027,"y":754},"latlng":[10394.75,3939.5]},{"id":1750810289680,"name":"Redenção","stations":[{"freq":87.8,"pol":"V","name":"EPC R. Nacional","pi":"4201","kw":1},{"freq":91.7,"pol":"V","name":"Capital FM","pi":"42C1","kw":0.9},{"freq":96,"pol":"V","name":"EPC R. Musical","pi":"4202","kw":1}],"point":{"x":2160,"y":730},"latlng":[11746.75,5653]},{"id":1750810354518,"name":"Xanxerê","stations":[{"freq":89.4,"pol":"V","name":"EPC R. Nacional","pi":"4201","kw":7.3},{"freq":92.3,"pol":"V","name":"EPC R. Musical","pi":"4202","kw":7.3},{"freq":97.6,"pol":"V","name":"Capital FM","pi":"42C1","kw":4},{"freq":101.5,"pol":"V","name":"Rádio Rock","pi":"42C8","kw":0.63}],"point":{"x":2194,"y":704},"latlng":[11407.25,6307.5]},{"id":1750810418930,"name":"Xanxerê","stations":[{"freq":102.1,"pol":"V","name":"Vibração FM","pi":"FFFF","kw":0.6},{"freq":102.5,"pol":"V","name":"X102.5","pi":"4891","kw":0.6},{"freq":103.6,"pol":"V","name":"Flash Rádio","pi":"493A","kw":0.6},{"freq":104.3,"pol":"V","name":"RMC Rádio","pi":"42C3","kw":0.6}],"point":{"x":2004,"y":507},"latlng":[11511.75,6393.75]},{"id":1750810421213,"name":"Xanxerê","stations":[{"freq":105.8,"pol":"V","name":"Rádio FG Codósia","pi":"422C","kw":0.6}],"point":{"x":2050,"y":493},"latlng":[11515.25,6405.25]},{"id":1750810541497,"name":"Tunset Peak","stations":[{"freq":88.1,"pol":"C","name":"OPB Radio 1","pi":"5201","kw":100},{"freq":90.7,"pol":"C","name":"OPB Radio 2","pi":"5202","kw":100},{"freq":98.1,"pol":"C","name":"OPB Classical","pi":"5204","kw":100},{"freq":102.7,"pol":"C","name":"OPB Radio 3","pi":"5203","kw":100}],"point":{"x":2040,"y":1007},"latlng":[6874.25,10857.5]},{"id":1750810598759,"name":"Harpney Transmitter","stations":[{"freq":92.9,"pol":"C","name":"Mix 92.9","pi":"56C8","kw":100},{"freq":98.7,"pol":"C","name":"Alt 98.7","pi":"5211","kw":100},{"freq":99.9,"pol":"C","name":"Virgin Radio Ocostan","pi":"522E","kw":100},{"freq":103.7,"pol":"C","name":"103.7 Kiss FM","pi":"5212","kw":100},{"freq":105.7,"pol":"C","name":"DFM Ocostan","pi":"52DF","kw":100},{"freq":107.1,"pol":"C","name":"Fun 107.1","pi":"5237","kw":100}],"point":{"x":2225,"y":1023},"latlng":[6980.75,11020.75]},{"id":1750810671971,"name":"Springton","stations":[{"freq":104.3,"pol":"V","name":"Springton's Local 104.3","pi":"5735","kw":1}],"point":{"x":1373,"y":934},"latlng":[7018.75,10812.75]},{"id":1750810887694,"name":"Podozny Zendmast","stations":[{"freq":87.7,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":0.06},{"freq":98.5,"pol":"V","name":"Avto 24 Radio","pi":"88C6","kw":0.1},{"freq":103,"pol":"V","name":"Radio FG.","pi":"822C","kw":0.063},{"freq":103.8,"pol":"V","name":"Radio Komersial","pi":"8669","kw":0.01},{"freq":107.4,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":0.063}],"point":{"x":761,"y":439},"latlng":[10396.75,3285]},{"id":1751893125090,"name":"Doetinlingen","stations":[{"freq":93.3,"pol":"H","name":"RTO Capital FM (International Service)","pi":"8101","kw":0.158}],"point":{"x":885,"y":436},"latlng":[11612.25,4887.75]},{"id":1752252500107,"name":"Doetinlingen","stations":[{"freq":92.7,"pol":"V","name":"Rouge FM","pi":"8102","kw":1},{"freq":104.7,"pol":"V","name":"VoxPop","pi":"8704","kw":1}],"point":{"x":558,"y":472},"latlng":[11591.75,4935.25]},{"id":1752267436482,"name":"Emmelburg","stations":[{"freq":89.5,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":91.5,"pol":"V","name":"DFM","pi":"82DF","kw":1},{"freq":93,"pol":"V","name":"Radio FG.","pi":"822C","kw":1},{"freq":96,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":1},{"freq":105.9,"pol":"V","name":"Fun Radio","pi":"8217","kw":1},{"freq":107.3,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":1}],"point":{"x":953,"y":318},"latlng":[10876.25,4934.5]},{"id":1752272597765,"name":"Brasbeke","stations":[{"freq":90.2,"pol":"V","name":"Fun Radio","pi":"8217","kw":1},{"freq":93.2,"pol":"V","name":"Radio FG.","pi":"822C","kw":1},{"freq":94.9,"pol":"V","name":"Europa 1","pi":"82E1","kw":1},{"freq":97.5,"pol":"V","name":"Europa 2","pi":"82E2","kw":1},{"freq":99.9,"pol":"V","name":"Nostalgie","pi":"8213","kw":1},{"freq":100.3,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":1},{"freq":103.5,"pol":"V","name":"DFM","pi":"82DF","kw":1},{"freq":106.1,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":107,"pol":"C","name":"Brasbeke Omroep","pi":"8878","kw":0.5}],"point":{"x":792,"y":615},"latlng":[10143.75,4416.5]},{"id":1752274514093,"name":"Brasbeke","stations":[{"freq":98.1,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":1},{"freq":100.7,"pol":"V","name":"Jazz Radio","pi":"82FC","kw":1},{"freq":101.5,"pol":"V","name":"Virgin Radio","pi":"82C9","kw":1}],"point":{"x":48,"y":-166},"latlng":[10131.5,4416.5]},{"id":1752277078665,"name":"Clearbell Tower","stations":[{"freq":89.9,"pol":"H","name":"OPB Radio 1","pi":"5201","kw":6.3},{"freq":93.1,"pol":"H","name":"OPB Radio 2","pi":"5202","kw":6.3},{"freq":94.7,"pol":"H","name":"OPB Radio 3","pi":"5203","kw":6.3},{"freq":95.5,"pol":"H","name":"OPB Classical","pi":"5204","kw":6.3}],"point":{"x":644,"y":412},"latlng":[6975.75,9923.25]},{"id":1754416966371,"name":"Oost-Wageselt Eiland","stations":[{"freq":91.75,"pol":"C","name":"jammers","pi":"","kw":null}],"point":{"x":345,"y":56},"latlng":[10536.5,5660.5]},{"id":1754416999274,"name":"Sint Vinkel Eiland","stations":[{"freq":91.75,"pol":"C","name":"jammers","pi":"","kw":null}],"point":{"x":-21,"y":356},"latlng":[10123,4964.5]},{"id":1754417428582,"name":"Herlecht","stations":[{"freq":88.3,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":0.063},{"freq":90.9,"pol":"V","name":"MegaMusic","pi":"891C","kw":0.5},{"freq":94.5,"pol":"V","name":"DFM","pi":"82DF","kw":0.5},{"freq":94.9,"pol":"V","name":"Radio FG.","pi":"822C","kw":0.3},{"freq":106.3,"pol":"V","name":"Fun Radio","pi":"8217","kw":0.1},{"freq":107.5,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":1}],"point":{"x":-147,"y":-195},"latlng":[11650.25,4204.5]},{"id":1754419660598,"name":"Roesstal Zendmast","stations":[{"freq":89.3,"pol":"C","name":"SPO Radio 1","pi":"8201","kw":8.7},{"freq":91.8,"pol":"C","name":"SPO Radio 2","pi":"8202","kw":8.7},{"freq":98.9,"pol":"C","name":"Hit Radio SPO 3","pi":"8203","kw":8.7},{"freq":102.1,"pol":"C","name":"Radio 538","pi":"82C7","kw":5},{"freq":105.6,"pol":"C","name":"SPO Nieuwsd","pi":"8204","kw":5}],"point":{"x":538,"y":1258},"latlng":[11558,4224]},{"id":1754478483637,"name":"Zaltkerk","stations":[{"freq":93.8,"pol":"V","name":"Nostalgie","pi":"8213","kw":0.5}],"point":{"x":1107,"y":-378},"latlng":[11115,3299.5]},{"id":1754479943711,"name":"Emmelburg","stations":[{"freq":99.1,"pol":"V","name":"Nostalgie","pi":"8213","kw":0.1},{"freq":105.2,"pol":"V","name":"Jazz Radio","pi":"82FC","kw":1},{"freq":107.9,"pol":"V","name":"Europa 1","pi":"82E1","kw":1}],"point":{"x":693,"y":368},"latlng":[10926.75,4894]},{"id":1754493077679,"name":"Milstone","stations":[{"freq":89.7,"pol":"C","name":"OPB Radio 1","pi":"5201","kw":79},{"freq":92.5,"pol":"C","name":"OPB Radio 2","pi":"5202","kw":79},{"freq":97.3,"pol":"C","name":"OPB Radio 3","pi":"5203","kw":79},{"freq":100.3,"pol":"C","name":"Z100","pi":"5673","kw":60},{"freq":100.7,"pol":"C","name":"OPB Classical","pi":"5204","kw":60},{"freq":102.7,"pol":"C","name":"102.7 Kiss FM","pi":"5213","kw":73},{"freq":103.5,"pol":"V","name":"DFM Ocostan","pi":"52DF","kw":4},{"freq":107.3,"pol":"V","name":"Bikini FM","pi":"57C4","kw":4}],"point":{"x":704,"y":265},"latlng":[8154.25,10588.5]},{"id":1754568056886,"name":"Door","stations":[{"freq":107.7,"pol":"V","name":"Radio Ocostan Highways","pi":"5222","kw":0.06}],"point":{"x":1266,"y":461},"latlng":[7006.5,10525.25]},{"id":1754568362859,"name":"Lincoln","stations":[{"freq":107.7,"pol":"V","name":"Radio Ocostan Highways","pi":"5222","kw":0.06}],"point":{"x":1382,"y":318},"latlng":[7346,10570.75]},{"id":1754568428471,"name":"Butt Tunnel","stations":[{"freq":107.7,"pol":"H","name":"Radio Ocostan Highways","pi":"5222","kw":0.06}],"point":{"x":1338,"y":-70},"latlng":[7596.730302457246,10537.676683656835]},{"id":1754568509248,"name":"Facesits","stations":[{"freq":107.7,"pol":"V","name":"Radio Ocostan Highways","pi":"5222","kw":0.06}],"point":{"x":1436,"y":-494},"latlng":[7934.25,10556]},{"id":1754568681371,"name":"Springton","stations":[{"freq":107.7,"pol":"H","name":"Radio Ocostan Highways","pi":"5222","kw":0.035}],"point":{"x":1664,"y":-438},"latlng":[7157.539449986525,10532.415216967815]},{"id":1754569637940,"name":"East Butt","stations":[{"freq":107.7,"pol":"V","name":"Radio Ocostan Highways","pi":"5222","kw":0.06}],"point":{"x":1451,"y":-1574},"latlng":[7749.75,10549.25]},{"id":1754569683057,"name":"Facesits","stations":[{"freq":107.7,"pol":"V","name":"Radio Ocostan Highways","pi":"5222","kw":0.05}],"point":{"x":1855,"y":-2460},"latlng":[8194.75,10549.25]},{"id":1754570632986,"name":"Butt","stations":[{"freq":93.3,"pol":"V","name":"DFM Ocostan","pi":"52DF","kw":1},{"freq":96.3,"pol":"V","name":"Bikini FM","pi":"57C4","kw":1},{"freq":99.9,"pol":"V","name":"Virgin Radio Ocostan","pi":"522E","kw":0.5}],"point":{"x":1014,"y":10},"latlng":[8038.25,10154.5]},{"id":1754571175633,"name":"Darney","stations":[{"freq":93.9,"pol":"H","name":"OPB Radio 1","pi":"5201","kw":4},{"freq":95.7,"pol":"H","name":"OPB Radio 2","pi":"5202","kw":4},{"freq":97.9,"pol":"H","name":"OPB Radio 3","pi":"5203","kw":4},{"freq":102.9,"pol":"H","name":"OPB Classical","pi":"5204","kw":4}],"point":{"x":1516,"y":-799},"latlng":[8274,9717]},{"id":1754573654065,"name":"Facesits","stations":[{"freq":99.9,"pol":"V","name":"Virgin Radio Ocostan","pi":"522E","kw":3},{"freq":102.3,"pol":"V","name":"Butt FM","pi":"noPI","kw":1}],"point":{"x":611,"y":205},"latlng":[8040.25,10474.5]},{"id":1754573907532,"name":"Butt","stations":[{"freq":107.1,"pol":"V","name":"Butt FM","pi":"noPI","kw":1}],"point":{"x":782,"y":-116},"latlng":[8036.25,10153.75]},{"id":1754576497919,"name":"Gorway Tower","stations":[{"freq":91.5,"pol":"C","name":"OPB Radio 1","pi":"5201","kw":6.3},{"freq":94.1,"pol":"C","name":"OPB Radio 2","pi":"5202","kw":6.3},{"freq":96.7,"pol":"C","name":"OPB Radio 3","pi":"5203","kw":6.3},{"freq":100.1,"pol":"C","name":"OPB Classical","pi":"5204","kw":6.3}],"point":{"x":778,"y":-126},"latlng":[8764.5,10066.75]},{"id":1754583387069,"name":"Swimsuit","stations":[{"freq":90.7,"pol":"C","name":"OPB Radio 1","pi":"5201","kw":20},{"freq":93.5,"pol":"C","name":"OPB Radio 2","pi":"5202","kw":20},{"freq":98.5,"pol":"C","name":"OPB Radio 3","pi":"5203","kw":20},{"freq":99.9,"pol":"C","name":"Virgin Radio Ocostan","pi":"522E","kw":6.3},{"freq":104.3,"pol":"C","name":"OPB Classical","pi":"5204","kw":20}],"point":{"x":-269,"y":-411},"latlng":[7849.5,9020.25]},{"id":1754688241576,"name":"Omigrad","stations":[{"freq":99.8,"pol":"C","name":"Volt Radio","pi":"87ED","kw":4},{"freq":100.3,"pol":"V","name":"Radio Rossii [RUS]","pi":"7848","kw":4}],"point":{"x":312,"y":201},"latlng":[10110.5,2964.25]},{"id":1754698822375,"name":"Wageselt","stations":[{"freq":90.7,"pol":"V","name":"Fun Radio","pi":"8217","kw":1},{"freq":92.3,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":97.3,"pol":"V","name":"Europa 2","pi":"82E2","kw":1},{"freq":100.5,"pol":"V","name":"Radio FG.","pi":"822C","kw":1},{"freq":107.8,"pol":"V","name":"Volt Radio","pi":"87ED","kw":6.3}],"point":{"x":854,"y":445},"latlng":[10539.5,5622]},{"id":1754698825686,"name":"Wageselt","stations":[{"freq":92.7,"pol":"V","name":"Europa 1","pi":"82E1","kw":0.5},{"freq":93.1,"pol":"V","name":"Novoye Radio [RUS]","pi":"7739","kw":0.5},{"freq":93.6,"pol":"V","name":"Flaix FM Sveland","pi":"82C8","kw":0.5},{"freq":107.4,"pol":"V","name":"Nostalgie","pi":"8213","kw":0.27}],"point":{"x":704,"y":361},"latlng":[10560.5,5584.5]},{"id":1754703456295,"name":"Tragal","stations":[{"freq":90.8,"pol":"V","name":"Fun Radio","pi":"8217","kw":0.1},{"freq":91.8,"pol":"V","name":"DFM","pi":"82DF","kw":0.1},{"freq":100.3,"pol":"V","name":"NRJ Sveland","pi":"8220","kw":0.093},{"freq":100.9,"pol":"V","name":"Radio FG.","pi":"822C","kw":0.1}],"point":{"x":759,"y":506},"latlng":[10872.25,4464.75]},{"id":1754704386775,"name":"Mitchfield","stations":[{"freq":99.9,"pol":"V","name":"Virgin Radio Ocostan","pi":"522E","kw":1}],"point":{"x":684,"y":369},"latlng":[6979,9930.25]},{"id":1754763400592,"name":"Arnemegen Zendmast","stations":[{"freq":94.4,"pol":"H","name":"SPO Radio 1","pi":"8201","kw":4},{"freq":96.6,"pol":"H","name":"SPO Radio 2","pi":"8202","kw":4},{"freq":99.5,"pol":"H","name":"HitRadio SPO3","pi":"8203","kw":4},{"freq":102.2,"pol":"H","name":"Radio 538","pi":"82C7","kw":4},{"freq":105.1,"pol":"H","name":"SPO Nieuws","pi":"8204","kw":2}],"point":{"x":874,"y":499},"latlng":[10871.25,2584.5]},{"id":1754763849351,"name":"Groendert","stations":[{"freq":88.1,"pol":"C","name":"Novoye Radio [RUS]","pi":"7739","kw":1},{"freq":100.5,"pol":"C","name":"NRJ Sveland","pi":"8220","kw":1},{"freq":103,"pol":"C","name":"Radio FG.","pi":"822C","kw":1},{"freq":104.6,"pol":"C","name":"DFM","pi":"82DF","kw":1}],"point":{"x":1019,"y":477},"latlng":[10849.25,2582.5]},{"id":1754766395943,"name":"Valea Mediasilor","stations":[{"freq":94.8,"pol":"V","name":"Radio ZU","pi":"E2AA","kw":0.2},{"freq":96.5,"pol":"V","name":"Virgin Radio","pi":"E05F","kw":0.2}],"point":{"x":25,"y":-95},"latlng":[12680.75,3412.75]}]}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>weimc - FM transmitter maps (updated)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 5px; z-index: 1000; }
+    #top-panel button, #top-panel input { margin-right: 8px; height: 30px; font-family: Arial, sans-serif; }
+    #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
+    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 300px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
+    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s, opacity 0.12s; opacity: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 3px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
+    th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
+    button.small { padding: 2px 5px; font-size: 12px; }
+    .freq-btn { background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; color: #0645ad; font-family: inherit; }
+    .freq-btn.active { background: rgba(6,69,173,0.08); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="top-panel">
+    <button id="load-db">Load DB</button>
+    <button id="save-db">Save DB</button>
+    <button id="add-tx">Add TX</button>
+    <input type="text" id="freq-filter" placeholder="Filter frequency (e.g. 105.7)" />
+    <input type="text" id="pi-filter" placeholder="Filter PI code (e.g. 8201)" />
+    <input type="text" id="eirp-filter" placeholder="Min EIRP (kW)" />
+    <button id="toggle-selected">Toggle Selected TXs</button>
+  </div>
+  <div id="tx-sheet"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+  window.onload = function () {
+    const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 2, zoomSnap: 0.1 });
+    const imgUrl = 'http://i.soupco.net/u/QdGeot.png';
+    const bounds = [[0,0],[15904,15968]];
+    L.imageOverlay(imgUrl, bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    const icons = {
+      low:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-lo.png', iconSize:[19,19], iconAnchor:[9.5,19] }),
+      med:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-med.png', iconSize:[23,23], iconAnchor:[11.5,23] }),
+      high: L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-hi.png', iconSize:[27,27], iconAnchor:[13.5,27] }),
+      rx:   L.icon({ iconUrl:'https://maps.fmdx.org/old/img/rx.png',    iconSize:[34,26], iconAnchor:[17,26] })
+    };
+
+    const tooltipOffsets = { lo:  { x: 6,  y: 18 }, med: { x: 8,  y: 22 }, hi:  { x: 9,  y: 26 } };
+    const tooltipNudge = { lo:  { x: 0,  y: -19 }, med: { x: 0,  y: -23 }, hi:  { x: 0,  y: -27 } };
+
+    let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, showSelected = false;
+    const selected = new Set();
+
+    function computeDistanceCRS(crs1, crs2) {
+      const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
+      return (Math.sqrt(dx * dx + dy * dy) * 0.1).toFixed(1);
+    }
+
+    function computeAzimuthCRS(crs1, crs2) {
+      let theta = Math.atan2(crs2.x - crs1.x, crs2.y - crs1.y) * 180 / Math.PI;
+      return ((theta + 360) % 360).toFixed(0);
+    }
+
+    document.getElementById('save-db').onclick = () => {
+      const saveable = txList.map(tx => ({ id: tx.id, name: tx.name, stations: tx.stations, point: tx.point, latlng: tx.latlng }));
+      const blob = new Blob([JSON.stringify({txList: saveable})], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fm_tx_db.json';
+      a.click();
+    };
+
+    async function loadDB(urlFallback) {
+      try {
+        const res = await fetch(urlFallback);
+        const loaded = await res.json();
+        loaded.txList.forEach(t => { if (t.point) createTX(t, true); });
+      } catch {
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+        inp.onchange = e => {
+          const r = new FileReader();
+          r.onload = () => JSON.parse(r.result).txList.forEach(t => { if (t.point) createTX(t, true); });
+          r.readAsText(e.target.files[0]);
+        };
+        inp.click();
+      }
+    }
+
+    document.getElementById('load-db').onclick = () => loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
+    loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
+
+    document.getElementById('add-tx').onclick = () => { addingTX = true; map.getContainer().style.cursor='crosshair'; };
+    map.on('click', e => {
+      if(!addingTX) return;
+      const name = prompt('Site name:'); if(!name){addingTX=false;map.getContainer().style.cursor='';return;}
+      createTX({id:Date.now(),name,stations:[],point:map.latLngToLayerPoint(e.latlng)});
+      addingTX=false; map.getContainer().style.cursor='';
+    });
+
+    function createTX(data,load=false) {
+      const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
+      const crsPt = map.options.crs.project(latlng);
+      const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
+      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo' };
+
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      txList.push(tx); updateIcon(tx); attach(tx);
+      if(load) marker.fire('add');
+    }
+
+    function attach(tx) {
+      tx.marker.on('contextmenu', () => {
+        if (tx.line) {
+          map.removeLayer(tx.line);
+          tx.line = null;
+          selected.delete(tx.id);
+        } else {
+          drawTrail(tx);
+          selected.add(tx.id);
+        }
+      });
+      tx.marker.on('click', () => {
+        sheet.style.display = sheet.style.display === 'block' ? 'none' : 'block';
+        openSheet(tx);
+      });
+      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); repositionTipIfNeeded(tx); });
+      tx.marker.on('drag', ()=> repositionTipIfNeeded(tx));
+      tx.marker.on('mouseover',()=>showTip(tx));
+      tx.marker.on('mouseout',hideTip);
+    }
+
+    function drawTrail(tx) {
+      if(!rx) return;
+      if(tx.line) map.removeLayer(tx.line);
+      tx.line = L.polyline([rx.getLatLng(),tx.marker.getLatLng()],{color:'red',weight:2,opacity:0.7}).addTo(map);
+    }
+
+    map.on('contextmenu',e=>{
+      if(rx) return;
+      rx = L.marker(e.latlng,{icon:icons.rx,draggable:true}).addTo(map);
+      rx.crs = map.options.crs.project(e.latlng);
+      const pt = map.latLngToLayerPoint(e.latlng);
+      document.cookie = `rx_x=${pt.x};rx_y=${pt.y}`;
+      rx.on('dragend',()=>{
+        const ll=rx.getLatLng(); rx.crs=map.options.crs.project(ll);
+        txList.forEach(t=> t.line && drawTrail(t));
+      });
+    });
+
+    const sheet=document.getElementById('tx-sheet');
+
+    function openSheet(tx){
+      sheet.innerHTML = '';
+      const h = document.createElement('h4'); h.textContent = tx.name; sheet.appendChild(h);
+
+      const table = document.createElement('table');
+      const hdr = table.insertRow();
+      ['Freq','Pol','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
+
+      tx.stations.forEach((s, i) => {
+        const r = table.insertRow();
+        const freqCell = r.insertCell();
+        const freqBtn = document.createElement('button');
+        freqBtn.className = 'freq-btn';
+        freqBtn.innerText = s.freq !== undefined ? String(s.freq) : '';
+        freqBtn.onclick = () => { toggleCoverageForStation(tx, i, freqBtn); };
+        if (tx.stationCircles[i]) freqBtn.classList.add('active');
+        freqCell.appendChild(freqBtn);
+
+        const polCell = r.insertCell(); polCell.innerText = s.pol || '';
+        const nameCell = r.insertCell(); nameCell.innerText = s.name || '';
+        const piCell = r.insertCell(); piCell.innerText = s.pi || '';
+        const kwCell = r.insertCell(); kwCell.innerText = (s.kw !== undefined && s.kw !== null && !isNaN(s.kw)) ? (Number(s.kw).toFixed(3) + ' kW') : '';
+
+        const ctlCell = r.insertCell();
+        const e = document.createElement('button'); e.innerText = '✎'; e.className='small';
+        e.onclick = () => { editStation(tx, i); };
+        const d = document.createElement('button'); d.innerText='🗑'; d.className='small';
+        d.onclick = () => {
+          if (tx.stationCircles[i]) {
+            try { map.removeLayer(tx.stationCircles[i].layer); } catch(e) {}
+            delete tx.stationCircles[i];
+          }
+          tx.stations.splice(i,1);
+          openSheet(tx);
+          updateIcon(tx);
+        };
+        ctlCell.append(e,d);
+      });
+
+      const add = document.createElement('button'); add.innerText='Add station'; add.onclick=()=>addStation(tx);
+      const del = document.createElement('button'); del.innerText='Delete TX'; del.style.marginLeft='10px';
+      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
+      sheet.append(table, add, del);
+    }
+
+    function addStation(tx){
+      const f=parseFloat(prompt('Freq(87.5-108):'));
+      if(isNaN(f)||f<87.5||f>108)return;
+      const p=prompt('Pol(H,V,C,M,?):');
+      const n=prompt('Name:');
+      const pi=prompt('PI:');
+      const kwInput=prompt('kW:');
+      const kw=parseFloat(kwInput);
+
+      // directional prompt (Y/N)
+      const dirFlag = (prompt('Make this station directional? (Y/N)') || '').trim().toUpperCase();
+      let directional = false, directionAngle = null;
+      if (dirFlag === 'Y' || dirFlag === 'YES') {
+        directional = true;
+        const angleInput = prompt('Direction angle (0-359, 0 = North, clockwise):', '0');
+        const angleNum = parseInt(angleInput, 10);
+        if (!isNaN(angleNum) && angleNum >= 0 && angleNum <= 359) directionAngle = angleNum;
+        else { directional = false; directionAngle = null; }
+      }
+
+      tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw, directional: directional, directionAngle: directionAngle});
+
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      openSheet(tx);
+      updateIcon(tx);
+    }
+
+    function editStation(tx,i){
+      const s=tx.stations[i];
+      const f=parseFloat(prompt('Freq:',s.freq));
+      if(isNaN(f)||f<87.5||f>108)return;
+      s.freq=f;
+      s.pol=prompt('Pol:',s.pol);
+      s.name=prompt('Name:',s.name);
+      s.pi=prompt('PI:',s.pi);
+      const kwInput = prompt('kW:', s.kw);
+      s.kw = parseFloat(kwInput);
+
+      const dirFlag = (prompt('Make this station directional? (Y/N)', s.directional ? 'Y' : 'N') || '').trim().toUpperCase();
+      if (dirFlag === 'Y' || dirFlag === 'YES') {
+        s.directional = true;
+        const angleInput = prompt('Direction angle (0-359, 0 = North, clockwise):', (typeof s.directionAngle === 'number' && !isNaN(s.directionAngle)) ? String(s.directionAngle) : '0');
+        const angleNum = parseInt(angleInput, 10);
+        if (!isNaN(angleNum) && angleNum >= 0 && angleNum <= 359) s.directionAngle = angleNum; else { s.directional = false; s.directionAngle = null; }
+      } else {
+        s.directional = false;
+        s.directionAngle = null;
+      }
+
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      openSheet(tx);
+      updateIcon(tx);
+    }
+
+    function updateIcon(tx){
+      let m = 0;
+      const filteredStations = tx.stations.filter(s => {
+        const freqMatch = !filterFreq || s.freq === filterFreq;
+        const piMatch = !filterPI || (s.pi && s.pi.toUpperCase() === filterPI);
+        const eirpMatch = !filterEIRP || (s.kw || 0) >= filterEIRP;
+        return freqMatch && piMatch && eirpMatch;
+      });
+      if (filteredStations.length) m = Math.max(...filteredStations.map(s => s.kw || 0));
+      else if (!filterFreq && !filterPI && !filterEIRP && tx.stations.length) m = Math.max(...tx.stations.map(s => s.kw || 0));
+
+      if (m >= 5) { tx.marker.setIcon(icons.high); tx.iconType = 'hi'; }
+      else if (m >= 0.5) { tx.marker.setIcon(icons.med); tx.iconType = 'med'; }
+      else { tx.marker.setIcon(icons.low); tx.iconType = 'lo'; }
+    }
+
+    const tip = document.createElement('div');
+    tip.className = 'tooltip-box';
+    document.body.append(tip);
+    let hoveredTx = null;
+
+    function positionTipForTx(tx) {
+      if (!tx) return;
+      if (!rx) return;
+
+      const crsRx = rx.crs || map.options.crs.project(rx.getLatLng());
+      const crsTx = tx.crs || map.options.crs.project(tx.marker.getLatLng());
+      const dx = crsRx.x - crsTx.x, dy = crsRx.y - crsTx.y;
+      const distKm = Math.sqrt(dx*dx + dy*dy) * 0.1;
+      const distKmRounded = Math.round(distKm);
+      // azimuth: compute bearing from TX -> RX (0 = north, clockwise)
+      const az = computeAzimuthCRS(crsTx, crsRx);
+
+      tip.innerHTML = '';
+      const nameNode = document.createTextNode(tx.name + ' – ');
+      const kmSpan = document.createElement('span');
+      kmSpan.textContent = distKmRounded + ' km';
+      if (distKmRounded >= 700) { kmSpan.style.color = 'red'; kmSpan.style.fontWeight = 'bold'; }
+      else if (distKmRounded >= 400) { kmSpan.style.color = 'black'; kmSpan.style.fontWeight = 'bold'; }
+      else { kmSpan.style.color = 'black'; kmSpan.style.fontWeight = 'normal'; }
+      const restNode = document.createTextNode(' – ' + az + '°');
+      tip.appendChild(nameNode);
+      tip.appendChild(kmSpan);
+      tip.appendChild(restNode);
+
+      let clientX, clientY;
+      const iconEl = (tx.marker && tx.marker.getElement) ? tx.marker.getElement() : null;
+
+      if (iconEl && iconEl.getBoundingClientRect) {
+        const rect = iconEl.getBoundingClientRect();
+        clientX = rect.left;
+        clientY = rect.top + rect.height;
+      } else {
+        const pos = map.latLngToContainerPoint(tx.marker.getLatLng());
+        const containerRect = map.getContainer().getBoundingClientRect();
+        clientX = containerRect.left + pos.x;
+        clientY = containerRect.top + pos.y;
+      }
+
+      const iconType = tx.iconType || 'lo';
+      const offset = tooltipOffsets[iconType] || {x:0,y:0};
+      const nudge  = tooltipNudge[iconType]  || {x:0,y:0};
+
+      tip.style.visibility = 'hidden';
+      tip.style.display = 'block';
+      const left = Math.round(clientX + offset.x + nudge.x);
+      const top  = Math.round(clientY + offset.y + nudge.y);
+      tip.style.left = left + 'px';
+      tip.style.top  = top + 'px';
+      tip.style.visibility = 'visible';
+      tip.style.opacity = '1';
+    }
+
+    function showTip(tx) { hoveredTx = tx; if (!rx) return; positionTipForTx(tx); }
+    function hideTip() { hoveredTx = null; tip.style.display = 'none'; tip.style.opacity = '0'; }
+    function repositionTipIfNeeded(tx) { if (hoveredTx && tx && hoveredTx.id === tx.id) positionTipForTx(tx); }
+    map.on('move zoom', () => { if (hoveredTx) positionTipForTx(hoveredTx); });
+
+    function applyFilters() {
+      txList.forEach(tx => {
+        const matchesFreq = !filterFreq || tx.stations.some(s => s.freq === filterFreq);
+        const matchesPI = !filterPI || tx.stations.some(s => s.pi && s.pi.toUpperCase() === filterPI);
+        const matchesEIRP = !filterEIRP || tx.stations.some(s => (s.kw || 0) >= filterEIRP);
+        const shouldShow = matchesFreq && matchesPI && matchesEIRP;
+        if (shouldShow) {
+          if (!map.hasLayer(tx.marker)) map.addLayer(tx.marker);
+        } else {
+          if (map.hasLayer(tx.marker)) map.removeLayer(tx.marker);
+        }
+        updateIcon(tx);
+      });
+    }
+
+    document.getElementById('freq-filter').oninput = e => { filterFreq = parseFloat(e.target.value) || null; applyFilters(); };
+    document.getElementById('pi-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterPI = input.length ? input : null; applyFilters(); };
+    document.getElementById('eirp-filter').oninput = e => { filterEIRP = parseFloat(e.target.value) || null; applyFilters(); };
+
+    document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
+
+    /********* Coverage polygon logic (seeded, slightly uneven, directional support) *********/
+
+    // seeded PRNG (mulberry32)
+    function seedFromString(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+      return h;
+    }
+    function mulberry32(a) {
+      return function() {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function degToRad(d){ return d * Math.PI/180; }
+
+    // map direction string to angle (0 = north, clockwise)
+    const dirToAngle = { 'N':0, 'NE':45, 'E':90, 'SE':135, 'S':180, 'SW':225, 'W':270, 'NW':315 };
+
+    // slightly uneven polygon generator: per-TX+radius seed -> deterministic slight noise
+    function createCoveragePolygon(centerLatLng, radiusKm, tx, stationIndex, directional=false, directionAngle=null, segments = 64) {
+      if (!radiusKm || radiusKm <= 0) return L.polygon([], {color:'blue', weight:2, opacity:0.6, fillOpacity:0.08});
+
+      // seed depends on TX id and quantized radius so same TX/EIRP produce same shape
+      const quant = Math.round(radiusKm * 10); // 0.1 km quant
+      const seedStr = `${tx.id}_${quant}`;
+      const rnd = mulberry32(seedFromString(seedStr));
+
+      const centerCRS = map.options.crs.project(centerLatLng);
+      const latlngs = [];
+
+      const R = radiusKm;
+      // directionAngle: degrees, 0 = north, clockwise. If provided, use it.
+      let dirAngle = null;
+        if (typeof directionAngle === 'number' && !isNaN(directionAngle)) {
+          dirAngle = ((directionAngle % 360) + 360) % 360;
+        }
+
+      for (let i = 0; i < segments; i++) {
+        // a: radians where 0 = east, ccw positive
+        const a = (i / segments) * Math.PI * 2;
+        // convert to compass degrees where 0 = north, clockwise
+        const angleDeg = (90 - (a * 180 / Math.PI) + 360) % 360;
+
+        // base radius
+        let baseRadius = R;
+
+        // polarization-specific shape modulation
+        // determine station polarization if available
+        let pol = null;
+        try { const s = tx.stations && tx.stations[stationIndex]; if (s && s.pol) pol = String(s.pol).toUpperCase(); } catch (e) { pol = null; }
+
+        if (pol === 'C' || pol === 'O') {
+          // C = circular: keep baseRadius (with slight per-vertex perturbation applied below)
+          baseRadius = R;
+        } else if (pol === 'H') {
+          // H = horizontal: smooth 6-point star (low-contrast)
+          // use a gentle 6-fold cosine modulation to push radius toward edges
+          const theta = a; // radians
+          const starFactor = 1 + 0.12 * Math.cos(6 * theta); // vary ±12%
+          baseRadius = R * starFactor;
+        } else if (pol === 'V') {
+          // V = vertical: create a 'sideways W' feeling at the back and a cropped half-circle at the front
+          if (dirAngle === null) {
+            // if no direction provided, treat front as 0 (north)
+            // front half: angle difference to 0
+            const delta = Math.min(Math.abs(((angleDeg - 0 + 540) % 360) - 180), 180);
+            if (delta <= 90) {
+              // front half: cropped (use ~90% radius)
+              baseRadius = R * 0.9;
+            } else {
+              // back: W-like lobes using cos(4*theta) (four lobes -> W shape sideways)
+              const theta = a;
+              const wFactor = 1 + 0.18 * Math.cos(4 * theta); // ±18%
+              baseRadius = R * wFactor * 0.85; // slightly reduced overall
+            }
+          } else {
+            // compute smallest angular difference between this vertex and the front direction
+            const delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180); // [0,180]
+            if (delta <= 90) {
+              // front half (within ±90° of dirAngle) cropped
+              baseRadius = R * 0.9;
+            } else {
+              // back half: create W-like lobes oriented perpendicular to the front direction
+              // Achieve 'sideways W' by rotating the cosine frequency by 90° relative to front
+              // shift angle by 90°: convert to radians
+              const relRad = degToRad(angleDeg - dirAngle + 90);
+              const wFactor = 1 + 0.18 * Math.cos(4 * relRad); // ±18%
+              baseRadius = R * wFactor * 0.85;
+            }
+          }
+        } else {
+          // default: slight variation from circular
+          baseRadius = R;
+        }
+
+        // directional shaping if a numeric directionAngle is provided (smooth interpolation front/back)
+        if (dirAngle !== null) {
+          // compute angular difference where 0 -> front
+          let delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180); // [0,180]
+          // t = 1 at front, 0 at back
+          const t = (Math.cos(degToRad(delta)) + 1) / 2;
+          // blend between front (baseRadius) and back reduced radius (approx 20 km min for large R)
+          const backMin = 0.2 * R; // back radius is 20% of base radius (proportional to power)
+          baseRadius = backMin + (baseRadius - backMin) * t;
+        }
+
+        // small per-vertex perturbation (±7%) to make shape slightly uneven
+        const perturb = 1 + (rnd() - 0.5) * 0.14; // range roughly [0.93,1.07]
+        const r = Math.max(0.1, baseRadius * perturb);
+
+        // convert r (km) to CRS units (CRS in this map uses 0.1 km per unit)
+        const dx = Math.cos(a) * r * 10; // km->CRS units
+        const dy = Math.sin(a) * r * 10;
+        const ptCRS = L.point(centerCRS.x + dx, centerCRS.y + dy);
+        latlngs.push(map.options.crs.unproject(ptCRS));
+      }
+
+      return L.polygon(latlngs, { color: 'blue', weight: 2, opacity: 0.6, fillOpacity: 0.08 });
+    }
+
+    function kW_to_km_radius(kw) {
+      const k = Number(kw) || 0;
+      if (k <= 0) return 0;
+      const log = Math.log10(k);
+      const radius = -3 * (log * log) + 37.5 * log + 65;
+      return Math.max(0, radius);
+    }
+
+    function toggleCoverageForStation(tx, stationIndex, freqBtnElement) {
+      const s = tx.stations[stationIndex];
+      if (!s) return;
+      const kw = Number(s.kw) || 0;
+      const radiusKm = kW_to_km_radius(kw);
+      // remove existing
+      if (tx.stationCircles && tx.stationCircles[stationIndex]) {
+        try { map.removeLayer(tx.stationCircles[stationIndex].layer); } catch (e) {}
+        delete tx.stationCircles[stationIndex];
+        if (freqBtnElement) freqBtnElement.classList.remove('active');
+        return;
+      }
+
+      // create polygon using TX-level seeded shape (same EIRP -> same shape), but allow directional modification per-station
+      const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, stationIndex, !!s.directional, s.directionAngle);
+      poly.addTo(map);
+      tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: !!s.directional, directionAngle: s.directionAngle };
+      if (freqBtnElement) freqBtnElement.classList.add('active');
+    }
+
+    function updateCoverageForTX(tx) {
+      if (!tx.stationCircles) return;
+      Object.keys(tx.stationCircles).forEach(idx => {
+        const sc = tx.stationCircles[idx];
+        if (!sc) return;
+        try { map.removeLayer(sc.layer); } catch (e) {}
+        // find station to get kw/direction
+        const s = tx.stations[idx];
+        const radiusKm = sc.km || (s ? kW_to_km_radius(s.kw) : 0);
+        const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, idx, !!(s && s.directional), s && s.directionAngle);
+        poly.addTo(map);
+        tx.stationCircles[idx] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: !!(s && s.directional), directionAngle: s && s.directionAngle };
+      });
+    }
+
+    function updateAllCoverage() { txList.forEach(tx => updateCoverageForTX(tx)); }
+    map.on('zoomend', updateAllCoverage); map.on('moveend', updateAllCoverage);
+
+    function removeAllCoverage() {
+      txList.forEach(tx => {
+        if (!tx.stationCircles) return;
+        Object.values(tx.stationCircles).forEach(c => { try{ map.removeLayer(c.layer); } catch {} });
+        tx.stationCircles = {};
+      });
+    }
+
+    /********* End coverage logic *********/
+
+  };
+  </script>
+</body>
+</html>
