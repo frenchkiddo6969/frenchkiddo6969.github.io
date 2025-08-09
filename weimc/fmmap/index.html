@@ -36,7 +36,7 @@
   <script>
   window.onload = function () {
     const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 2, zoomSnap: 0.1 });
-    const imgUrl = 'https://main-hostize-com.s3.us-west-2.amazonaws.com/1754698597_Taqeasmyxo?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA4XIV7DNDANIP5Y7Y%2F20250809%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250809T001707Z&X-Amz-Expires=3600&X-Amz-Signature=e4fa86a0ad6b83d178af53179dead971a7d55dc552199addcefa64c419e5551a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject';
+    const imgUrl = 'https://files.catbox.moe/ae44t1.png';
     const bounds = [[0,0],[15904,15968]];
     L.imageOverlay(imgUrl, bounds).addTo(map);
     map.fitBounds(bounds);
