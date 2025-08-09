@@ -116,6 +116,12 @@
       const crsPt = map.options.crs.project(latlng);
       const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
       const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo' };
+
+      // ensure stations are sorted by freq ascending whenever a TX is created/loaded
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
       txList.push(tx); updateIcon(tx); attach(tx);
       if(load) marker.fire('add');
     }
@@ -213,8 +219,44 @@
       sheet.append(table, add, del);
     }
 
-    function addStation(tx){ const f=parseFloat(prompt('Freq(87.5-108):')); if(isNaN(f)||f<87.5||f>108)return; const p=prompt('Pol(H,V,C,M,?):'); const n=prompt('Name:'); const pi=prompt('PI:'); const kwInput=prompt('kW:'); const kw=parseFloat(kwInput); tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw});openSheet(tx);updateIcon(tx);}    
-    function editStation(tx,i){ const s=tx.stations[i]; const f=parseFloat(prompt('Freq:',s.freq)); if(isNaN(f)||f<87.5||f>108)return; s.freq=f; s.pol=prompt('Pol:',s.pol); s.name=prompt('Name:',s.name); s.pi=prompt('PI:',s.pi); const kwInput = prompt('kW:', s.kw); s.kw = parseFloat(kwInput); openSheet(tx);updateIcon(tx);}  
+    function addStation(tx){
+      const f=parseFloat(prompt('Freq(87.5-108):'));
+      if(isNaN(f)||f<87.5||f>108)return;
+      const p=prompt('Pol(H,V,C,M,?):');
+      const n=prompt('Name:');
+      const pi=prompt('PI:');
+      const kwInput=prompt('kW:');
+      const kw=parseFloat(kwInput);
+      tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw});
+
+      // sort stations by frequency ascending (87.5 -> 108.0)
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      openSheet(tx);
+      updateIcon(tx);
+    }
+
+    function editStation(tx,i){
+      const s=tx.stations[i];
+      const f=parseFloat(prompt('Freq:',s.freq));
+      if(isNaN(f)||f<87.5||f>108)return;
+      s.freq=f;
+      s.pol=prompt('Pol:',s.pol);
+      s.name=prompt('Name:',s.name);
+      s.pi=prompt('PI:',s.pi);
+      const kwInput = prompt('kW:', s.kw);
+      s.kw = parseFloat(kwInput);
+
+      // re-sort after editing frequency
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      openSheet(tx);
+      updateIcon(tx);
+    }
 
     function updateIcon(tx){
       let m = 0;
