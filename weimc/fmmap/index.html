@@ -6,15 +6,17 @@
   <title>weimc - FM transmitter maps</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
+    html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 5px; z-index: 1000; }
-    #top-panel button, #top-panel input { margin-right: 8px; height: 30px; }
+    #top-panel button, #top-panel input { margin-right: 8px; height: 30px; font-family: Arial, sans-serif; }
     #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
-    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 300px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; }
-    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.9); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 300px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
+    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
     th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
     button.small { padding: 2px 5px; font-size: 12px; }
+    .freq-btn { background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; color: #0645ad; font-family: inherit; }
+    .freq-btn.active { background: rgba(6,69,173,0.08); border-radius: 3px; }
   </style>
 </head>
 <body>
@@ -99,7 +101,7 @@
       const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
       const crsPt = map.options.crs.project(latlng);
       const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
-      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng] };
+      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {} };
       txList.push(tx); updateIcon(tx); attach(tx);
       if(load) marker.fire('add');
     }
@@ -119,7 +121,7 @@
         sheet.style.display = sheet.style.display === 'block' ? 'none' : 'block';
         openSheet(tx);
       });
-      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); });
+      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); });
       tx.marker.on('mouseover',e=>showTip(e,tx)); tx.marker.on('mouseout',hideTip);
     }
 
@@ -134,7 +136,7 @@
       rx = L.marker(e.latlng,{icon:icons.rx,draggable:true}).addTo(map);
       rx.crs = map.options.crs.project(e.latlng);
       const pt = map.latLngToLayerPoint(e.latlng);
-      document.cookie=`rx_x=${pt.x};rx_y=${pt.y}`;
+      document.cookie = `rx_x=${pt.x};rx_y=${pt.y}`;
       rx.on('dragend',()=>{
         const ll=rx.getLatLng(); rx.crs=map.options.crs.project(ll);
         txList.forEach(t=> t.line && drawTrail(t));
@@ -142,23 +144,61 @@
     });
 
     const sheet=document.getElementById('tx-sheet');
+
     function openSheet(tx){
-      sheet.innerHTML=`<h4>${tx.name}</h4>`;
-      const table=document.createElement('table');
-      const hdr=table.insertRow(); ['Freq','Pol','Name','PI','kW',''].forEach(t=>hdr.insertCell().innerText=t);
-      tx.stations.forEach((s,i)=>{
-        const r=table.insertRow(); [s.freq,s.pol,s.name,s.pi,s.kw].forEach(v=>r.insertCell().innerText=v);
-        const c=r.insertCell(); const e=document.createElement('button');e.innerText='✎';e.className='small';e.onclick=()=>editStation(tx,i);
-        const d=document.createElement('button');d.innerText='🗑';d.className='small';d.onclick=()=>{tx.stations.splice(i,1);openSheet(tx);updateIcon(tx);} ;
-        c.append(e,d);
+      sheet.innerHTML = '';
+      const h = document.createElement('h4'); h.textContent = tx.name; sheet.appendChild(h);
+
+      const table = document.createElement('table');
+      const hdr = table.insertRow();
+      ['Freq','Pol','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
+
+      tx.stations.forEach((s, i) => {
+        const r = table.insertRow();
+        // Frequency clickable cell
+        const freqCell = r.insertCell();
+        const freqBtn = document.createElement('button');
+        freqBtn.className = 'freq-btn';
+        freqBtn.innerText = s.freq !== undefined ? String(s.freq) : '';
+        // toggle coverage on click
+        freqBtn.onclick = () => {
+          toggleCoverageForStation(tx, i, freqBtn);
+        };
+        // mark active if already present
+        if (tx.stationCircles[i]) freqBtn.classList.add('active');
+        freqCell.appendChild(freqBtn);
+
+        const polCell = r.insertCell(); polCell.innerText = s.pol || '';
+        const nameCell = r.insertCell(); nameCell.innerText = s.name || '';
+        const piCell = r.insertCell(); piCell.innerText = s.pi || '';
+        const kwCell = r.insertCell(); kwCell.innerText = (s.kw !== undefined && s.kw !== null && !isNaN(s.kw)) ? (Number(s.kw).toFixed(3) + ' kW') : '';
+
+        const ctlCell = r.insertCell();
+        const e = document.createElement('button'); e.innerText = '✎'; e.className='small';
+        e.onclick = () => { editStation(tx, i); };
+        const d = document.createElement('button'); d.innerText='🗑'; d.className='small';
+        d.onclick = () => {
+          // remove any coverage circle for this station if exists
+          if (tx.stationCircles[i]) {
+            try { map.removeLayer(tx.stationCircles[i].layer); } catch(e) {}
+            delete tx.stationCircles[i];
+          }
+          tx.stations.splice(i,1);
+          openSheet(tx);
+          updateIcon(tx);
+        };
+        ctlCell.append(e,d);
       });
-      const add=document.createElement('button');add.innerText='Add station';add.onclick=()=>addStation(tx);
-      const del=document.createElement('button');del.innerText='Delete TX';del.style.marginLeft='10px';del.onclick=()=>{ map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
-      sheet.append(table,add,del);
+
+      const add = document.createElement('button'); add.innerText='Add station'; add.onclick=()=>addStation(tx);
+      const del = document.createElement('button'); del.innerText='Delete TX'; del.style.marginLeft='10px';
+      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); // remove coverage circles
+        Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
+      sheet.append(table, add, del);
     }
 
-    function addStation(tx){ const f=parseFloat(prompt('Freq(87.5-108):')); if(isNaN(f)||f<87.5||f>108)return; const p=prompt('Pol(H,V,C,M,?):'); const n=prompt('Name:'); const pi=prompt('PI:'); const kw=parseFloat(prompt('kW:')); tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw});openSheet(tx);updateIcon(tx);}    
-    function editStation(tx,i){ const s=tx.stations[i]; const f=parseFloat(prompt('Freq:',s.freq)); if(isNaN(f)||f<87.5||f>108)return; s.freq=f; s.pol=prompt('Pol:',s.pol); s.name=prompt('Name:',s.name); s.pi=prompt('PI:',s.pi); s.kw=parseFloat(prompt('kW:',s.kw)); openSheet(tx);updateIcon(tx);}  
+    function addStation(tx){ const f=parseFloat(prompt('Freq(87.5-108):')); if(isNaN(f)||f<87.5||f>108)return; const p=prompt('Pol(H,V,C,M,?):'); const n=prompt('Name:'); const pi=prompt('PI:'); const kwInput=prompt('kW:'); const kw=parseFloat(kwInput); tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw});openSheet(tx);updateIcon(tx);}    
+    function editStation(tx,i){ const s=tx.stations[i]; const f=parseFloat(prompt('Freq:',s.freq)); if(isNaN(f)||f<87.5||f>108)return; s.freq=f; s.pol=prompt('Pol:',s.pol); s.name=prompt('Name:',s.name); s.pi=prompt('PI:',s.pi); const kwInput = prompt('kW:', s.kw); s.kw = parseFloat(kwInput); openSheet(tx);updateIcon(tx);}  
 
     function updateIcon(tx){
       let m = 0;
@@ -178,7 +218,46 @@
     }
 
     const tip=document.createElement('div');tip.className='tooltip-box';document.body.append(tip);
-    function showTip(e,tx){ if(!rx)return; const di=computeDistanceCRS(rx.crs,tx.crs); const az=computeAzimuthCRS(rx.crs,tx.crs); tip.innerText=`${tx.name} – ${di} km – ${az}°`; tip.style.left=e.originalEvent.clientX+10+'px'; tip.style.top=e.originalEvent.clientY+10+'px'; tip.style.display='block'; }
+
+    // --- showTip: only kilometers number is styled, no decimals ---
+    function showTip(e,tx){
+      if(!rx) return;
+      // compute CRS points (use stored crs if available)
+      const crs1 = rx.crs || map.options.crs.project(rx.getLatLng());
+      const crs2 = tx.crs || map.options.crs.project(tx.marker.getLatLng());
+      const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
+      const distKm = Math.sqrt(dx*dx + dy*dy) * 0.1;
+      const distKmRounded = Math.round(distKm); // no decimals
+      const az = computeAzimuthCRS(crs1, crs2);
+
+      // build tooltip HTML with only the km number in a span
+      tip.innerHTML = '';
+      const nameNode = document.createTextNode(tx.name + ' – ');
+      const kmSpan = document.createElement('span');
+      kmSpan.textContent = distKmRounded + ' km';
+      // apply styling to the km number only
+      if (distKmRounded >= 700) {
+        kmSpan.style.color = 'red';
+        kmSpan.style.fontWeight = 'bold';
+      } else if (distKmRounded >= 400) {
+        kmSpan.style.color = 'black';
+        kmSpan.style.fontWeight = 'bold';
+      } else {
+        kmSpan.style.color = 'black';
+        kmSpan.style.fontWeight = 'normal';
+      }
+      const restNode = document.createTextNode(' – ' + az + '°');
+
+      tip.appendChild(nameNode);
+      tip.appendChild(kmSpan);
+      tip.appendChild(restNode);
+
+      // position and show
+      tip.style.left = (e.originalEvent.clientX + 10) + 'px';
+      tip.style.top  = (e.originalEvent.clientY + 10) + 'px';
+      tip.style.display = 'block';
+    }
+
     function hideTip(){ tip.style.display='none'; }
 
     function applyFilters() {
@@ -213,6 +292,95 @@
     };
 
     document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
+
+    /********* Coverage circle logic (CRS-based) with custom radius formula *********/
+
+    // Create polygon approximating circle in CRS/projected coordinates (so radius corresponds to same "km" used by computeDistanceCRS)
+    function createCoveragePolygon(centerLatLng, radiusKm, segments = 64) {
+      // Use CRS projected coordinates so radius is independent of zoom.
+      // In computeDistanceCRS you used: km = crsDelta * 0.1
+      // therefore crs units per km = 1 / 0.1 = 10 -> radiusCRS = radiusKm * 10
+      const centerCRS = map.options.crs.project(centerLatLng);
+      const radiusCRS = radiusKm * 10; // matches computeDistanceCRS scaling
+      const latlngs = [];
+      for (let i = 0; i < segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        const dx = Math.cos(a) * radiusCRS;
+        const dy = Math.sin(a) * radiusCRS;
+        const ptCRS = L.point(centerCRS.x + dx, centerCRS.y + dy);
+        // convert back to latlng using CRS unproject (this yields latlngs that represent the real-world circle)
+        latlngs.push(map.options.crs.unproject(ptCRS));
+      }
+      return L.polygon(latlngs, { color: 'blue', weight: 2, opacity: 0.6, fillOpacity: 0.08 });
+    }
+
+    // radius formula matching your examples:
+    //  - 1 kW  -> 65 km
+    //  - 100 kW -> 130 km
+    //  - 0.1 kW (100 W) -> 25 km
+    // fitted exactly by a quadratic in log10(kW):
+    // radius_km = -2.5 * (log10(kW))^2 + 37.5 * log10(kW) + 65
+    function kW_to_km_radius(kw) {
+      const k = Number(kw) || 0;
+      if (k <= 0) return 0;
+      const log = Math.log10(k);
+      const radius = -2.5 * (log * log) + 37.5 * log + 65;
+      return Math.max(0, radius); // clamp to non-negative
+    }
+
+    function toggleCoverageForStation(tx, stationIndex, freqBtnElement) {
+      const s = tx.stations[stationIndex];
+      if (!s) return;
+      const kw = Number(s.kw) || 0;
+      // compute radius using your requested formula
+      const radiusKm = kW_to_km_radius(kw);
+      // if already shown, remove
+      if (tx.stationCircles && tx.stationCircles[stationIndex]) {
+        try { map.removeLayer(tx.stationCircles[stationIndex].layer); } catch (e) {}
+        delete tx.stationCircles[stationIndex];
+        if (freqBtnElement) freqBtnElement.classList.remove('active');
+        return;
+      }
+      // create and add polygon (CRS-based)
+      const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm);
+      poly.addTo(map);
+      tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng() };
+      if (freqBtnElement) freqBtnElement.classList.add('active');
+    }
+
+    // Recompute polygon geometry for a tx (used on zoom/move/drag)
+    function updateCoverageForTX(tx) {
+      if (!tx.stationCircles) return;
+      Object.keys(tx.stationCircles).forEach(idx => {
+        const sc = tx.stationCircles[idx];
+        if (!sc) return;
+        try { map.removeLayer(sc.layer); } catch (e) {}
+        // recreate polygon using the stored km radius and current tx marker position
+        const newPoly = createCoveragePolygon(tx.marker.getLatLng(), sc.km);
+        newPoly.addTo(map);
+        tx.stationCircles[idx] = { layer: newPoly, km: sc.km, centerLatLng: tx.marker.getLatLng() };
+      });
+    }
+
+    // Update all coverage polygons on zoom/move so they keep correct scale/shape
+    function updateAllCoverage() {
+      txList.forEach(tx => updateCoverageForTX(tx));
+    }
+
+    map.on('zoomend', updateAllCoverage);
+    map.on('moveend', updateAllCoverage);
+
+    // Expose a function to programmatically remove all coverage polygons
+    function removeAllCoverage() {
+      txList.forEach(tx => {
+        if (!tx.stationCircles) return;
+        Object.values(tx.stationCircles).forEach(c => { try{ map.removeLayer(c.layer); } catch {} });
+        tx.stationCircles = {};
+      });
+    }
+
+    /********* End coverage logic *********/
+
   };
   </script>
 </body>
