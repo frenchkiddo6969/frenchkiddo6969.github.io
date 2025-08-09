@@ -11,7 +11,7 @@
     #top-panel button, #top-panel input { margin-right: 8px; height: 30px; font-family: Arial, sans-serif; }
     #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
     #tx-sheet { position: absolute; top: 50px; left: 10px; width: 300px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
-    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s; }
+    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s, opacity 0.12s; opacity: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 3px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
     th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
     button.small { padding: 2px 5px; font-size: 12px; }
@@ -46,6 +46,20 @@
       med:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-med.png', iconSize:[23,23], iconAnchor:[11.5,23] }),
       high: L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-hi.png', iconSize:[27,27], iconAnchor:[13.5,27] }),
       rx:   L.icon({ iconUrl:'https://maps.fmdx.org/old/img/rx.png',    iconSize:[34,26], iconAnchor:[17,26] })
+    };
+
+    // base offsets (where the icon's bottom-left corner is relative to the marker point)
+    const tooltipOffsets = {
+      lo:  { x: 6,  y: 18 },
+      med: { x: 8,  y: 22 },
+      hi:  { x: 9,  y: 26 }
+    };
+
+    // nudge values (hard-coded per your instruction)
+    const tooltipNudge = {
+      lo:  { x: 0,  y: -19 },
+      med: { x: 0,  y: -23 },
+      hi:  { x: 0,  y: -27 }
     };
 
     let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, showSelected = false;
@@ -101,7 +115,7 @@
       const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
       const crsPt = map.options.crs.project(latlng);
       const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
-      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {} };
+      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo' };
       txList.push(tx); updateIcon(tx); attach(tx);
       if(load) marker.fire('add');
     }
@@ -121,8 +135,10 @@
         sheet.style.display = sheet.style.display === 'block' ? 'none' : 'block';
         openSheet(tx);
       });
-      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); });
-      tx.marker.on('mouseover',e=>showTip(e,tx)); tx.marker.on('mouseout',hideTip);
+      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); repositionTipIfNeeded(tx); });
+      tx.marker.on('drag', ()=> repositionTipIfNeeded(tx));
+      tx.marker.on('mouseover',()=>showTip(tx));
+      tx.marker.on('mouseout',hideTip);
     }
 
     function drawTrail(tx) {
@@ -211,31 +227,34 @@
       if (filteredStations.length) m = Math.max(...filteredStations.map(s => s.kw || 0));
       else if (!filterFreq && !filterPI && !filterEIRP && tx.stations.length) m = Math.max(...tx.stations.map(s => s.kw || 0));
 
-      let ic = icons.low;
-      if (m >= 5) ic = icons.high;
-      else if (m >= 0.5) ic = icons.med;
-      tx.marker.setIcon(ic);
+      if (m >= 5) { tx.marker.setIcon(icons.high); tx.iconType = 'hi'; }
+      else if (m >= 0.5) { tx.marker.setIcon(icons.med); tx.iconType = 'med'; }
+      else { tx.marker.setIcon(icons.low); tx.iconType = 'lo'; }
     }
 
-    const tip=document.createElement('div');tip.className='tooltip-box';document.body.append(tip);
+    // create tooltip element (hidden by default)
+    const tip = document.createElement('div');
+    tip.className = 'tooltip-box';
+    document.body.append(tip);
+    let hoveredTx = null;
 
-    // --- showTip: only kilometers number is styled, no decimals ---
-    function showTip(e,tx){
-      if(!rx) return;
-      // compute CRS points (use stored crs if available)
+    // Position the tooltip so its TOP-LEFT corner aligns with marker bottom-left (uses marker.getElement())
+    function positionTipForTx(tx) {
+      if (!tx) return;
+      if (!rx) return;
+
+      // Build content
       const crs1 = rx.crs || map.options.crs.project(rx.getLatLng());
       const crs2 = tx.crs || map.options.crs.project(tx.marker.getLatLng());
       const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
       const distKm = Math.sqrt(dx*dx + dy*dy) * 0.1;
-      const distKmRounded = Math.round(distKm); // no decimals
+      const distKmRounded = Math.round(distKm);
       const az = computeAzimuthCRS(crs1, crs2);
 
-      // build tooltip HTML with only the km number in a span
       tip.innerHTML = '';
       const nameNode = document.createTextNode(tx.name + ' – ');
       const kmSpan = document.createElement('span');
       kmSpan.textContent = distKmRounded + ' km';
-      // apply styling to the km number only
       if (distKmRounded >= 700) {
         kmSpan.style.color = 'red';
         kmSpan.style.fontWeight = 'bold';
@@ -247,18 +266,61 @@
         kmSpan.style.fontWeight = 'normal';
       }
       const restNode = document.createTextNode(' – ' + az + '°');
-
       tip.appendChild(nameNode);
       tip.appendChild(kmSpan);
       tip.appendChild(restNode);
 
-      // position and show
-      tip.style.left = (e.originalEvent.clientX + 10) + 'px';
-      tip.style.top  = (e.originalEvent.clientY + 10) + 'px';
+      // Use the marker DOM element if available (most accurate)
+      let clientX, clientY;
+      const iconEl = (tx.marker && tx.marker.getElement) ? tx.marker.getElement() : null;
+
+      if (iconEl && iconEl.getBoundingClientRect) {
+        const rect = iconEl.getBoundingClientRect();
+        // bottom-left corner of the icon (client coords)
+        clientX = rect.left;
+        clientY = rect.top + rect.height;
+      } else {
+        // fallback: container point -> client coords
+        const pos = map.latLngToContainerPoint(tx.marker.getLatLng());
+        const containerRect = map.getContainer().getBoundingClientRect();
+        clientX = containerRect.left + pos.x;
+        clientY = containerRect.top + pos.y;
+      }
+
+      // pick offset by icon type (base offset) + nudge
+      const iconType = tx.iconType || 'lo';
+      const offset = tooltipOffsets[iconType] || {x:0,y:0};
+      const nudge  = tooltipNudge[iconType]  || {x:0,y:0};
+
+      // TOP-LEFT of tooltip should sit at (clientX + offset.x + nudge.x, clientY + offset.y + nudge.y)
+      tip.style.visibility = 'hidden';
       tip.style.display = 'block';
+      const left = Math.round(clientX + offset.x + nudge.x);
+      const top  = Math.round(clientY + offset.y + nudge.y);
+      tip.style.left = left + 'px';
+      tip.style.top  = top + 'px';
+      tip.style.visibility = 'visible';
+      tip.style.opacity = '1';
     }
 
-    function hideTip(){ tip.style.display='none'; }
+    function showTip(tx) {
+      hoveredTx = tx;
+      if (!rx) return;
+      positionTipForTx(tx);
+    }
+
+    function hideTip() {
+      hoveredTx = null;
+      tip.style.display = 'none';
+      tip.style.opacity = '0';
+    }
+
+    function repositionTipIfNeeded(tx) {
+      if (hoveredTx && tx && hoveredTx.id === tx.id) positionTipForTx(tx);
+    }
+
+    // on map move/zoom reposition tooltip if needed
+    map.on('move zoom', () => { if (hoveredTx) positionTipForTx(hoveredTx); });
 
     function applyFilters() {
       txList.forEach(tx => {
@@ -295,74 +357,57 @@
 
     /********* Coverage circle logic (CRS-based) with custom radius formula *********/
 
-    // Create polygon approximating circle in CRS/projected coordinates (so radius corresponds to same "km" used by computeDistanceCRS)
     function createCoveragePolygon(centerLatLng, radiusKm, segments = 64) {
-      // Use CRS projected coordinates so radius is independent of zoom.
-      // In computeDistanceCRS you used: km = crsDelta * 0.1
-      // therefore crs units per km = 1 / 0.1 = 10 -> radiusCRS = radiusKm * 10
       const centerCRS = map.options.crs.project(centerLatLng);
-      const radiusCRS = radiusKm * 10; // matches computeDistanceCRS scaling
+      const radiusCRS = radiusKm * 10;
       const latlngs = [];
       for (let i = 0; i < segments; i++) {
         const a = (i / segments) * Math.PI * 2;
         const dx = Math.cos(a) * radiusCRS;
         const dy = Math.sin(a) * radiusCRS;
         const ptCRS = L.point(centerCRS.x + dx, centerCRS.y + dy);
-        // convert back to latlng using CRS unproject (this yields latlngs that represent the real-world circle)
         latlngs.push(map.options.crs.unproject(ptCRS));
       }
       return L.polygon(latlngs, { color: 'blue', weight: 2, opacity: 0.6, fillOpacity: 0.08 });
     }
 
-    // radius formula matching your examples:
-    //  - 1 kW  -> 65 km
-    //  - 100 kW -> 130 km
-    //  - 0.1 kW (100 W) -> 25 km
-    // fitted exactly by a quadratic in log10(kW):
-    // radius_km = -2.5 * (log10(kW))^2 + 37.5 * log10(kW) + 65
     function kW_to_km_radius(kw) {
       const k = Number(kw) || 0;
       if (k <= 0) return 0;
       const log = Math.log10(k);
       const radius = -2.5 * (log * log) + 37.5 * log + 65;
-      return Math.max(0, radius); // clamp to non-negative
+      return Math.max(0, radius);
     }
 
     function toggleCoverageForStation(tx, stationIndex, freqBtnElement) {
       const s = tx.stations[stationIndex];
       if (!s) return;
       const kw = Number(s.kw) || 0;
-      // compute radius using your requested formula
       const radiusKm = kW_to_km_radius(kw);
-      // if already shown, remove
       if (tx.stationCircles && tx.stationCircles[stationIndex]) {
         try { map.removeLayer(tx.stationCircles[stationIndex].layer); } catch (e) {}
         delete tx.stationCircles[stationIndex];
         if (freqBtnElement) freqBtnElement.classList.remove('active');
         return;
       }
-      // create and add polygon (CRS-based)
       const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm);
       poly.addTo(map);
       tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng() };
       if (freqBtnElement) freqBtnElement.classList.add('active');
     }
 
-    // Recompute polygon geometry for a tx (used on zoom/move/drag)
     function updateCoverageForTX(tx) {
       if (!tx.stationCircles) return;
       Object.keys(tx.stationCircles).forEach(idx => {
         const sc = tx.stationCircles[idx];
         if (!sc) return;
         try { map.removeLayer(sc.layer); } catch (e) {}
-        // recreate polygon using the stored km radius and current tx marker position
         const newPoly = createCoveragePolygon(tx.marker.getLatLng(), sc.km);
         newPoly.addTo(map);
         tx.stationCircles[idx] = { layer: newPoly, km: sc.km, centerLatLng: tx.marker.getLatLng() };
       });
     }
 
-    // Update all coverage polygons on zoom/move so they keep correct scale/shape
     function updateAllCoverage() {
       txList.forEach(tx => updateCoverageForTX(tx));
     }
@@ -370,7 +415,6 @@
     map.on('zoomend', updateAllCoverage);
     map.on('moveend', updateAllCoverage);
 
-    // Expose a function to programmatically remove all coverage polygons
     function removeAllCoverage() {
       txList.forEach(tx => {
         if (!tx.stationCircles) return;
