@@ -375,7 +375,7 @@
       const k = Number(kw) || 0;
       if (k <= 0) return 0;
       const log = Math.log10(k);
-      const radius = -2.5 * (log * log) + 37.5 * log + 65;
+      const radius = -3 * (log * log) + 37.5 * log + 65;
       return Math.max(0, radius);
     }
 
