@@ -49,7 +49,7 @@
     };
 
     const tooltipOffsets = { lo:  { x: 6,  y: 18 }, med: { x: 8,  y: 22 }, hi:  { x: 9,  y: 26 } };
-    const tooltipNudge = { lo:  { x: 0,  y: -19 }, med: { x: 0,  y: -23 }, hi:  { x: 0,  y: -27 } };
+    const tooltipNudge = { lo:  { x: 3,  y: -19 }, med: { x: 4,  y: -23 }, hi:  { x: 5,  y: -27 } };
 
     let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, showSelected = false;
     const selected = new Set();
@@ -102,8 +102,8 @@
       }
     }
 
-    document.getElementById('load-db').onclick = () => loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
-    loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
+    document.getElementById('load-db').onclick = () => loadDB('https://h0884rg5.live.codepad.app/txs.json');
+    loadDB('https://h0884rg5.live.codepad.app/txs.json');
 
     document.getElementById('add-tx').onclick = () => { addingTX = true; map.getContainer().style.cursor='crosshair'; };
     map.on('click', e => {
