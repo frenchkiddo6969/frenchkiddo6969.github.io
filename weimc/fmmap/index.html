@@ -102,8 +102,8 @@
       }
     }
 
-    document.getElementById('load-db').onclick = () => loadDB('https://h0884rg5.live.codepad.app/txs.json');
-    loadDB('https://h0884rg5.live.codepad.app/txs.json');
+    document.getElementById('load-db').onclick = () => loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
+    loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
 
     document.getElementById('add-tx').onclick = () => { addingTX = true; map.getContainer().style.cursor='crosshair'; };
     map.on('click', e => {
