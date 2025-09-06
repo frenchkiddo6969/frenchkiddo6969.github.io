@@ -4,19 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>weimc - FM transmitter maps</title>
+  <link rel="icon" href="https://maps.fmdx.org/old/img/tx-med.png" type="image/png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 5px; z-index: 1000; }
     #top-panel button, #top-panel input { margin-right: 8px; height: 30px; font-family: Arial, sans-serif; }
     #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
-    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 300px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
+    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 330px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
     .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s, opacity 0.12s; opacity: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 3px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
     th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
     button.small { padding: 2px 5px; font-size: 12px; }
     .freq-btn { background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; color: #0645ad; font-family: inherit; }
     .freq-btn.active { background: rgba(6,69,173,0.08); border-radius: 3px; }
+    /* visuals for sheet highlighting/dimming - no text color/bold changes */
+    tr.dim { background: #f4f4f4; } /* grayed background only */
+    tr.highlight { background: #fff7c2; } /* light yellow highlight only */
+    .freq-btn.criteria { background: rgba(255,235,150,0.6); border-radius: 3px; } /* freq button when used as criterion */
+    .station-name { cursor: pointer; color: #0645ad; text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -27,6 +33,7 @@
     <input type="text" id="freq-filter" placeholder="Filter frequency (e.g. 105.7)" />
     <input type="text" id="pi-filter" placeholder="Filter PI code (e.g. 8201)" />
     <input type="text" id="eirp-filter" placeholder="Min EIRP (kW)" />
+    <input type="text" id="station-filter" placeholder="Filter station name (exact)" />
     <button id="toggle-selected">Toggle Selected TXs</button>
   </div>
   <div id="tx-sheet"></div>
@@ -51,8 +58,9 @@
     const tooltipOffsets = { lo:  { x: 6,  y: 18 }, med: { x: 8,  y: 22 }, hi:  { x: 9,  y: 26 } };
     const tooltipNudge = { lo:  { x: 3,  y: -19 }, med: { x: 4,  y: -23 }, hi:  { x: 5,  y: -27 } };
 
-    let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, showSelected = false;
+    let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, filterStationName = null, showSelected = false;
     const selected = new Set();
+    let currentOpenTx = null; // id of TX currently shown in sheet
 
     function computeDistanceCRS(crs1, crs2) {
       const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
@@ -135,7 +143,7 @@
       const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
       const crsPt = map.options.crs.project(latlng);
       const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
-      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo' };
+      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo', highlightCriteria: null };
 
       if (tx.stations && tx.stations.length) {
         tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
@@ -157,8 +165,13 @@
         }
       });
       tx.marker.on('click', () => {
-        sheet.style.display = sheet.style.display === 'block' ? 'none' : 'block';
-        openSheet(tx);
+        if (sheet.style.display === 'block' && currentOpenTx === tx.id) {
+          sheet.style.display = 'none';
+          currentOpenTx = null;
+        } else {
+          sheet.style.display = 'block';
+          openSheet(tx);
+        }
       });
       tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); repositionTipIfNeeded(tx); });
       tx.marker.on('drag', ()=> repositionTipIfNeeded(tx));
@@ -187,6 +200,7 @@
     const sheet=document.getElementById('tx-sheet');
 
     function openSheet(tx){
+      currentOpenTx = tx.id;
       sheet.innerHTML = '';
       const h = document.createElement('h4'); h.textContent = tx.name; sheet.appendChild(h);
 
@@ -194,18 +208,83 @@
       const hdr = table.insertRow();
       ['Freq','Pol','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
 
+      // Decide per-row highlight/dim rules:
+      // If tx.highlightCriteria is set, use that. Otherwise use global filterPI/filterEIRP/filterFreq/filterStationName.
+      let crit = tx.highlightCriteria || null;
+      if (!crit) {
+        if (filterStationName) crit = { type: 'name', value: filterStationName };
+        else if (filterFreq) crit = { type: 'freq', value: filterFreq };
+        else if (filterPI) crit = { type: 'pi', value: filterPI };
+        else if (filterEIRP) crit = { type: 'eirp', value: filterEIRP };
+        else if (filterFreq || filterPI || filterEIRP) crit = { type: 'global', value: null }; // fallback global sentinel when any global filter active
+      }
+
+      // Build rows
       tx.stations.forEach((s, i) => {
         const r = table.insertRow();
+
+        // Determine highlight/dim state for this station:
+        let isMatch = true;
+        if (crit) {
+          if (crit.type === 'freq') {
+            isMatch = Number(s.freq) === Number(crit.value);
+          } else if (crit.type === 'pi') {
+            isMatch = (s.pi && String(s.pi).toUpperCase() === String(crit.value).toUpperCase());
+          } else if (crit.type === 'eirp') {
+            isMatch = (Number(s.kw) || 0) >= Number(crit.value);
+          } else if (crit.type === 'name') {
+            isMatch = (s.name && String(s.name).trim().toUpperCase() === String(crit.value).toUpperCase());
+          } else if (crit.type === 'global') {
+            const freqMatch = !filterFreq || Number(s.freq) === Number(filterFreq);
+            const piMatch = !filterPI || (s.pi && String(s.pi).toUpperCase() === String(filterPI).toUpperCase());
+            const eirpMatch = !filterEIRP || (Number(s.kw) || 0) >= Number(filterEIRP);
+            isMatch = freqMatch && piMatch && eirpMatch;
+          } else {
+            isMatch = true;
+          }
+        }
+
+        // apply only background changes (no text color/bold)
+        if (crit && isMatch) r.classList.add('highlight'); else if (crit && !isMatch) r.classList.add('dim');
+
         const freqCell = r.insertCell();
         const freqBtn = document.createElement('button');
         freqBtn.className = 'freq-btn';
         freqBtn.innerText = s.freq !== undefined ? String(s.freq) : '';
-        freqBtn.onclick = () => { toggleCoverageForStation(tx, i, freqBtn); };
+
+        // mark freq button visually if current tx.highlightCriteria or global freq filter matches
+        if ((tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq))
+            || (filterFreq && Number(filterFreq) === Number(s.freq))) {
+          freqBtn.classList.add('criteria');
+        }
+
+        freqBtn.onclick = () => {
+          // toggle coverage (existing behavior)
+          toggleCoverageForStation(tx, i, freqBtn);
+          // toggle highlight criterion for this tx by freq
+          if (tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq)) {
+            tx.highlightCriteria = null;
+          } else {
+            tx.highlightCriteria = { type: 'freq', value: s.freq };
+          }
+          openSheet(tx);
+        };
         if (tx.stationCircles[i]) freqBtn.classList.add('active');
         freqCell.appendChild(freqBtn);
 
         const polCell = r.insertCell(); polCell.innerText = s.pol || '';
-        const nameCell = r.insertCell(); nameCell.innerText = s.name || '';
+        const nameCell = r.insertCell();
+        nameCell.innerText = s.name || '';
+        // make the station name clickable: clicking it populates the station-filter and applies filters
+        nameCell.className = 'station-name';
+        nameCell.title = 'Click to filter by this station';
+        nameCell.onclick = () => {
+          const sval = s.name ? s.name.trim() : '';
+          document.getElementById('station-filter').value = sval;
+          filterStationName = sval.length ? sval.toUpperCase() : null;
+          applyFilters();
+        };
+
         const piCell = r.insertCell(); piCell.innerText = s.pi || '';
         const kwCell = r.insertCell(); kwCell.innerText = (s.kw !== undefined && s.kw !== null && !isNaN(s.kw)) ? (Number(s.kw).toFixed(3) + ' kW') : '';
 
@@ -227,7 +306,7 @@
 
       const add = document.createElement('button'); add.innerText='Add station'; add.onclick=()=>addStation(tx);
       const del = document.createElement('button'); del.innerText='Delete TX'; del.style.marginLeft='10px';
-      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; };
+      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; currentOpenTx = null; };
       sheet.append(table, add, del);
     }
 
@@ -297,10 +376,11 @@
         const freqMatch = !filterFreq || s.freq === filterFreq;
         const piMatch = !filterPI || (s.pi && s.pi.toUpperCase() === filterPI);
         const eirpMatch = !filterEIRP || (s.kw || 0) >= filterEIRP;
-        return freqMatch && piMatch && eirpMatch;
+        const nameMatch = !filterStationName || (s.name && s.name.trim().toUpperCase() === filterStationName);
+        return freqMatch && piMatch && eirpMatch && nameMatch;
       });
       if (filteredStations.length) m = Math.max(...filteredStations.map(s => s.kw || 0));
-      else if (!filterFreq && !filterPI && !filterEIRP && tx.stations.length) m = Math.max(...tx.stations.map(s => s.kw || 0));
+      else if (!filterFreq && !filterPI && !filterEIRP && !filterStationName && tx.stations.length) m = Math.max(...tx.stations.map(s => s.kw || 0));
 
       if (m >= 5) { tx.marker.setIcon(icons.high); tx.iconType = 'hi'; }
       else if (m >= 0.5) { tx.marker.setIcon(icons.med); tx.iconType = 'med'; }
@@ -374,7 +454,8 @@
         const matchesFreq = !filterFreq || tx.stations.some(s => s.freq === filterFreq);
         const matchesPI = !filterPI || tx.stations.some(s => s.pi && s.pi.toUpperCase() === filterPI);
         const matchesEIRP = !filterEIRP || tx.stations.some(s => (s.kw || 0) >= filterEIRP);
-        const shouldShow = matchesFreq && matchesPI && matchesEIRP;
+        const matchesName = !filterStationName || tx.stations.some(s => s.name && s.name.trim().toUpperCase() === filterStationName);
+        const shouldShow = matchesFreq && matchesPI && matchesEIRP && matchesName;
         if (shouldShow) {
           if (!map.hasLayer(tx.marker)) map.addLayer(tx.marker);
         } else {
@@ -382,11 +463,15 @@
         }
         updateIcon(tx);
       });
+
+      // If a sheet is open, refresh it so the dim/highlight state reflects current global filters
+      updateSheetIfOpen();
     }
 
     document.getElementById('freq-filter').oninput = e => { filterFreq = parseFloat(e.target.value) || null; applyFilters(); };
     document.getElementById('pi-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterPI = input.length ? input : null; applyFilters(); };
     document.getElementById('eirp-filter').oninput = e => { filterEIRP = parseFloat(e.target.value) || null; applyFilters(); };
+    document.getElementById('station-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterStationName = input.length ? input : null; applyFilters(); };
 
     document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
 
@@ -443,7 +528,7 @@
         const angleDeg = (90 - (a * 180 / Math.PI) + 360) % 360; // 0 = north, clockwise
 
         // compute baseRadius:
-        // - If NOT directional: keep baseRadius as a simple circular R (no pol-specific lobes).
+        // - If NOT directional: keep baseRadius as a simple circular R (no V/H special lobes).
         // - If directional: apply pol-specific modulation (C/H/V) as before.
         let baseRadius = R;
         let pol = null;
@@ -455,23 +540,15 @@
             baseRadius = R;
           } else if (pol === 'H') {
             // H -> slightly uneven octagon
-            //  - creates an 8-sided modulation (vertices at 0,45,90,...)
-            //  - peaks at the octagon vertices and slightly smaller on the sides
-            //  - uses the same seeded rnd() for small, deterministic per-vertex jitter
             const nearestVertex = Math.round(angleDeg / 45) * 45;
-            // minimal angular difference (0..180) to nearest vertex
             let delta = Math.abs(((angleDeg - nearestVertex + 540) % 360) - 180);
             if (delta > 180) delta = 360 - delta;
-            // t = 1 at a vertex, 0 at the side midpoint (22.5° away)
             const t = 1 - Math.min(delta, 22.5) / 22.5;
-            // base octagon factor: varies modestly between ~0.94 (side) and ~1.06 (vertex)
             const octFactor = 0.94 + 0.12 * t;
-            // small per-vertex jitter (seeded by rnd) to make it slightly uneven
-            const localJitter = 1 + (rnd() - 0.5) * 0.06; // ±3%
+            const localJitter = 1 + (rnd() - 0.5) * 0.06;
             baseRadius = R * octFactor * localJitter;
           } else if (pol === 'V') {
             if (dirAngle === null) {
-              // if no explicit directionAngle provided, still use default V-shape behavior (rare)
               const delta = Math.min(Math.abs(((angleDeg - 0 + 540) % 360) - 180), 180);
               if (delta <= 90) baseRadius = R * 0.9;
               else { const theta = a; const wFactor = 1 + 0.18 * Math.cos(4 * theta); baseRadius = R * wFactor * 0.85; }
@@ -502,29 +579,21 @@
         // apply REAR bulge ONLY when directional === true and bulgeDir exists
         let perturb = defaultJitter;
         if (directional === true && bulgeDir !== null) {
-          // angular difference between this vertex and the bulge direction (0..180)
           const raw = Math.abs(((angleDeg - bulgeDir + 360) % 360));
           const angDiff = Math.min(raw, 360 - raw); // 0..180 where 0 = exact rear
 
           if (angDiff <= coneDeg) {
-            // inside rear-focused cone: strongest at exact rear
             const frac = 1 - (angDiff / coneDeg); // 1 at center, 0 at cone edge
-
-            // base bias for this vertex from the main rear peak
             let biasMain = frac;
 
-            // occasionally create a double-bulge pattern: a second nearby peak
-            // this uses the same seeded rnd() so it's deterministic per-tx/quant
             let combinedFrac = biasMain;
             const dblChance = 0.35; // ~35% of bulges become double-bulges
             if (rnd() < dblChance) {
-              // offset between 8° and 18° for the secondary bulge (randomized)
               const offset = 8 + Math.floor(rnd() * 11);
               const raw2 = Math.abs(((angleDeg - (bulgeDir + offset) + 360) % 360));
               const angDiff2 = Math.min(raw2, 360 - raw2);
               let frac2 = 0;
               if (angDiff2 <= coneDeg) frac2 = 1 - (angDiff2 / coneDeg);
-              // combine by taking the max of the two proximity factors so we see twin peaks
               combinedFrac = Math.max(biasMain, frac2);
             }
 
@@ -532,11 +601,9 @@
             const localJitter = 1 + (rnd() - 0.5) * 0.08; // ±4%
             perturb = bias * localJitter;
           } else {
-            // outside cone: keep smooth small jitter only
             perturb = defaultJitter;
           }
         } else {
-          // not directional: only small jitter (no bulge)
           perturb = defaultJitter;
         }
 
@@ -607,6 +674,26 @@
         Object.values(tx.stationCircles).forEach(c => { try{ map.removeLayer(c.layer); } catch {} });
         tx.stationCircles = {};
       });
+    }
+
+    // refresh open sheet if any
+    function updateSheetIfOpen() {
+      if (!currentOpenTx) return;
+      const tx = txList.find(t => t.id === currentOpenTx);
+      if (tx) {
+        // If there are global filters or station name filter and tx doesn't have a tx.highlightCriteria, set sentinel so sheet dims/highlights
+        if (!tx.highlightCriteria && (filterPI || filterEIRP || filterFreq || filterStationName)) {
+          tx.highlightCriteria = { type: 'global', value: null };
+          const prev = tx.highlightCriteria;
+          openSheet(tx);
+          tx.highlightCriteria = null;
+        } else {
+          openSheet(tx);
+        }
+      } else {
+        currentOpenTx = null;
+        sheet.style.display = 'none';
+      }
     }
 
     /********* End coverage logic *********/
