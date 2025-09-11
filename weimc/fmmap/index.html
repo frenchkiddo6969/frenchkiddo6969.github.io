@@ -16,13 +16,21 @@
     table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
     th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
     button.small { padding: 2px 5px; font-size: 12px; }
-    .freq-btn { background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; color: #0645ad; font-family: inherit; }
+
+    /* freq button: inline with no space between freq and pol letter */
+    .freq-btn { background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; color: #0645ad; font-family: inherit; display: inline-flex; align-items: baseline; gap: 0; }
     .freq-btn.active { background: rgba(6,69,173,0.08); border-radius: 3px; }
+
     /* visuals for sheet highlighting/dimming - no text color/bold changes */
     tr.dim { background: #f4f4f4; } /* grayed background only */
     tr.highlight { background: #fff7c2; } /* light yellow highlight only */
     .freq-btn.criteria { background: rgba(255,235,150,0.6); border-radius: 3px; } /* freq button when used as criterion */
     .station-name { cursor: pointer; color: #0645ad; text-decoration: underline; }
+
+    /* frequency value and polarization letter styling: freq normal weight/size, pol smaller and lowercase with NO gap */
+    .freq-btn .freq-val, .freq-btn .pol { font-size: inherit; font-weight: inherit; line-height: 1; }
+    .freq-btn .pol { text-transform: lowercase; }
+
   </style>
 </head>
 <body>
@@ -206,7 +214,7 @@
 
       const table = document.createElement('table');
       const hdr = table.insertRow();
-      ['Freq','Pol','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
+      ['Freq','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
 
       // Decide per-row highlight/dim rules:
       // If tx.highlightCriteria is set, use that. Otherwise use global filterPI/filterEIRP/filterFreq/filterStationName.
@@ -237,7 +245,7 @@
           } else if (crit.type === 'global') {
             const freqMatch = !filterFreq || Number(s.freq) === Number(filterFreq);
             const piMatch = !filterPI || (s.pi && String(s.pi).toUpperCase() === String(filterPI).toUpperCase());
-            const eirpMatch = !filterEIRP || (Number(s.kw) || 0) >= Number(filterEIRP);
+            const eirpMatch = !filterEIRP || (Number(s.kw) || 0) >= filterEIRP;
             isMatch = freqMatch && piMatch && eirpMatch;
           } else {
             isMatch = true;
@@ -250,7 +258,12 @@
         const freqCell = r.insertCell();
         const freqBtn = document.createElement('button');
         freqBtn.className = 'freq-btn';
-        freqBtn.innerText = s.freq !== undefined ? String(s.freq) : '';
+
+        // show frequency and small pol letter to the right (lowercase) with NO space between them
+        const freqText = s.freq !== undefined ? String(s.freq) : '';
+        const polText = (s.pol || '').toString().trim();
+        freqBtn.innerHTML = '<span class="freq-val">' + freqText + '</span>' + (polText ? '<span class="pol">' + polText.charAt(0).toLowerCase() + '</span>' : '');
+        freqBtn.setAttribute('aria-label', freqText + (polText ? polText.charAt(0).toLowerCase() : ''));
 
         // mark freq button visually if current tx.highlightCriteria or global freq filter matches
         if ((tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq))
@@ -272,7 +285,6 @@
         if (tx.stationCircles[i]) freqBtn.classList.add('active');
         freqCell.appendChild(freqBtn);
 
-        const polCell = r.insertCell(); polCell.innerText = s.pol || '';
         const nameCell = r.insertCell();
         nameCell.innerText = s.name || '';
         // make the station name clickable: clicking it populates the station-filter and applies filters
@@ -343,7 +355,7 @@
     function editStation(tx,i){
       const s=tx.stations[i];
       const f=parseFloat(prompt('Freq:',s.freq));
-      if(isNaN(f)||f<87.5||f>108)return;
+      if(isNaN(f)||f<65.75||f>108)return;
       s.freq=f;
       s.pol=prompt('Pol:',s.pol);
       s.name=prompt('Name:',s.name);
