@@ -8,68 +8,78 @@
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#f6f6f6;
-      --muted:#9aa0a6;
-      --accent:#e45fa8;
-      --teal:#66b9ad;
-      --card-shadow:0 12px 30px rgba(14,20,25,0.12);
+      /* Dark-mode palette */
+      --bg:#071017;               /* page background */
+      --surface:#0f1720;          /* cards, panels */
+      --muted:#9fb0bb;            /* secondary text */
+      --text:#e6f2f6;             /* primary text */
+      --accent:#ff6db1;          /* primary accent (play button) */
+      --teal:#3ec2b4;            /* section title / highlights */
+      --card-shadow:0 10px 30px rgba(2,8,12,0.6);
+      --glass:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       font-family:'Rubik',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;
     }
+
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:#111;-webkit-font-smoothing:antialiased}
+    body{margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
 
     /* Layout */
     .wrap{display:flex;min-height:100vh;gap:20px}
     .topbar{background:transparent;padding:12px 18px;display:flex;align-items:center;gap:12px}
-    .topbar img{height:48px;display:block}
-    .topbar .title{font-weight:800;color:#111}
+    .topbar img{height:48px;display:block;filter:brightness(1.05) saturate(1.1)}
+    .topbar .title{font-weight:800;color:var(--text)}
 
     /* Sidebar */
-    .sidebar{width:260px;background:#fff;border-radius:12px;margin:18px;box-shadow:var(--card-shadow);padding:18px;display:flex;flex-direction:column;gap:14px}
+    .sidebar{width:260px;background:var(--surface);border-radius:12px;margin:18px;box-shadow:var(--card-shadow);padding:18px;display:flex;flex-direction:column;gap:14px}
     .brand{display:flex;align-items:center;gap:12px}
     .now-host{display:flex;flex-direction:column;align-items:center;gap:10px}
-    .host-photo{width:160px;height:160px;border-radius:12px;object-fit:cover;background:#eee}
+    .host-photo{width:160px;height:160px;border-radius:12px;object-fit:cover;background:#0b1220}
 
     .player-controls{display:flex;align-items:center;gap:10px;width:100%}
-    .play-btn{width:64px;height:64px;border-radius:50%;display:inline-grid;place-items:center;background:var(--accent);color:white;font-size:20px;border:none;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,0.12)}
-    .play-btn[aria-pressed="true"]{background:#c84b8e}
+    .play-btn{width:64px;height:64px;border-radius:50%;display:inline-grid;place-items:center;background:var(--accent);color:var(--surface);font-size:20px;border:none;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,0.4)}
+    .play-btn[aria-pressed="true"]{background:#de4f95;transform:translateY(1px)}
 
     .thumbs{display:flex;gap:8px;align-items:center}
-    .thumbs button{border:0;background:transparent;cursor:pointer;font-size:20px}
+    .thumbs button{border:0;background:transparent;cursor:pointer;font-size:20px;color:var(--muted)}
     .volume{flex:1}
     .volume input[type=range]{width:100%}
     .muted-note{font-size:12px;color:var(--muted);text-align:center}
 
     /* Main */
     .main{flex:1;margin:18px}
-    .hero{background:linear-gradient(90deg,#2b8bd6 0%,#3ea6ff 60%);height:220px;border-radius:14px;color:#fff;padding:18px;display:flex;align-items:center;gap:18px;overflow:hidden}
-    .hero .logo{width:220px;height:160px;object-fit:contain;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.06),transparent);display:flex;align-items:center;justify-content:center}
-    .hero .headline{font-size:28px;font-weight:800}
-    .hero .sub{color:rgba(255,255,255,0.9)}
+    .hero{background:linear-gradient(90deg,#073b54 0%,#0b5e88 60%);height:220px;border-radius:14px;color:var(--text);padding:18px;display:flex;align-items:center;gap:18px;overflow:hidden}
+    .hero .logo{width:220px;height:160px;object-fit:contain;border-radius:12px;background:var(--glass);display:flex;align-items:center;justify-content:center}
+    .hero .headline{font-size:28px;font-weight:800;color:var(--text)}
+    .hero .sub{color:rgba(230,242,246,0.9)}
 
     .news-section{margin-top:18px}
     .section-head{display:flex;justify-content:space-between;align-items:center}
-    .section-title{background:#63b9ad;color:#fff;padding:8px 12px;border-radius:8px;font-weight:800}
+    .section-title{background:var(--teal);color:#042028;padding:8px 12px;border-radius:8px;font-weight:800}
     .news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px}
-    .news-card{background:#fff;border-radius:12px;box-shadow:var(--card-shadow);overflow:hidden;display:flex;flex-direction:column}
-    .news-card img{width:100%;height:140px;object-fit:cover}
+    .news-card{background:var(--surface);border-radius:12px;box-shadow:var(--card-shadow);overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.02)}
+    .news-card img{width:100%;height:140px;object-fit:cover;filter:brightness(0.95) saturate(1.05)}
     .news-card .body{padding:12px}
     .news-card h4{margin:0 0 8px;font-size:16px}
     .news-card p{margin:0;color:var(--muted);font-size:14px}
+    .news-card a{color:var(--accent);text-decoration:none}
 
     /* Right column */
     .rightcol{width:320px;margin:18px}
-    .weather-box{background:#fff;border-radius:12px;padding:16px;box-shadow:var(--card-shadow)}
+    .weather-box{background:var(--surface);border-radius:12px;padding:16px;box-shadow:var(--card-shadow);border:1px solid rgba(255,255,255,0.02)}
     .weather-top{display:flex;align-items:center;gap:12px}
-    .weather-icon{width:64px;height:64px;display:inline-block}
+    .weather-icon{width:64px;height:64px;display:inline-block;color:var(--text)}
     .weather-icon svg{width:100%;height:100%;display:block}
-    .weather-temp{font-weight:800;font-size:28px}
+    .weather-temp{font-weight:800;font-size:28px;color:var(--text)}
     .weather-desc{color:var(--muted)}
 
     footer{margin:0 18px 30px 18px;color:var(--muted)}
 
     @media (max-width:1100px){.news-grid{grid-template-columns:1fr 1fr}.rightcol{display:none}}
     @media (max-width:760px){.wrap{flex-direction:column}.sidebar{width:auto;margin:12px}.rightcol{display:none}}
+
+    /* small tweaks */
+    a{color:var(--accent)}
+    .topbar .title{letter-spacing:0.2px}
   </style>
 </head>
 <body>
@@ -143,11 +153,8 @@
   <script>
   // === Configuration ===
   const STREAM_URL = 'https://radio.soupco.net:8443/rtocci-r1';
-  const LOGO_MAIN = 'https://i.soupco.net/u/pYlQyd.png';
-  // France24 - flux RSS (édition française)
+  const LOGO_MAIN = 'https://i.soupco.net/u/cYGtuv.png';
   const RSS_URL = 'https://www.france24.com/fr/rss';
-  // Note : plusieurs proxys publics sont testés. Pour fiabilité, utilisez votre propre proxy si besoin.
-  // Coordonnées de Narbonne
   const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=43.1844&longitude=3.0058&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh';
 
   // === DOM refs ===
@@ -163,7 +170,6 @@
   const weatherIconTop = $('#weather-icon-top');
   const hdrLogo = document.getElementById('site-logo-header');
 
-  // slot: set logo
   if (hdrLogo) hdrLogo.src = LOGO_MAIN;
 
   // === Audio player wiring ===
@@ -181,7 +187,6 @@
   }
 
   playBtnLeft.addEventListener('click', togglePlay);
-  // activation clavier pour l'accessibilité
   playBtnLeft.addEventListener('keydown', (e)=>{ if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); togglePlay(); } });
 
   volumeSlider.addEventListener('input', ()=>{ audio.volume = parseFloat(volumeSlider.value); });
@@ -241,12 +246,10 @@
     } catch(e){ console.warn('Could not fetch now playing', e); }
   }
 
-  // initial + périodique
   fetchNowPlaying();
   setInterval(fetchNowPlaying, 15 * 1000);
 
   // === Actualités (RSS) ===
-  // Cette implémentation tente plusieurs proxys CORS publics en séquence, puis une tentative directe.
   async function fetchNews(){
     const proxyCandidates = [
       'https://api.allorigins.win/raw?url=',
@@ -257,12 +260,10 @@
 
     let doc = null;
 
-    // Essayer les proxys un par un
     for (const proxy of proxyCandidates){
       try {
-        console.info('Trying RSS proxy:', proxy);
         const res = await fetch(proxy + encodeURIComponent(RSS_URL), { cache: 'no-store' });
-        if (!res.ok) { console.warn('Proxy responded with status', res.status, proxy); continue; }
+        if (!res.ok) { continue; }
 
         const contentType = (res.headers.get('content-type') || '').toLowerCase();
         let xmlText = null;
@@ -274,61 +275,40 @@
           xmlText = await res.text();
         }
 
-        if (!xmlText) { console.warn('Proxy returned empty body:', proxy); continue; }
+        if (!xmlText) { continue; }
 
         const parsed = new DOMParser().parseFromString(xmlText, 'text/xml');
         if (parsed && parsed.querySelectorAll('item').length > 0) {
           doc = parsed;
-          console.info('RSS parsed via proxy:', proxy);
           break;
-        } else {
-          console.warn('Parsed document had no <item> elements from proxy:', proxy);
         }
-      } catch (err) {
-        console.warn('Proxy fetch failed for', proxy, err && err.message ? err.message : err);
-        continue;
-      }
+      } catch (err) { continue; }
     }
 
-    // Dernier recours : fetch direct
     if (!doc) {
       try {
-        console.info('Attempting direct fetch of RSS (may be blocked by CORS)...');
         const r2 = await fetch(RSS_URL, { cache: 'no-store' });
         if (r2.ok) {
           const t = await r2.text();
           const parsedDirect = new DOMParser().parseFromString(t, 'text/xml');
           if (parsedDirect && parsedDirect.querySelectorAll('item').length > 0) {
             doc = parsedDirect;
-            console.info('RSS parsed via direct fetch.');
           } else {
-            // essayer d'autres encodages
             const directBuf = await r2.arrayBuffer();
             const fallbacks = ['utf-8','windows-1251','iso-8859-1'];
             for(const enc of fallbacks){
               try{
                 const dec = new TextDecoder(enc).decode(directBuf);
                 const altDoc = new DOMParser().parseFromString(dec, 'text/xml');
-                if(altDoc && altDoc.querySelectorAll('item').length>0){
-                  doc = altDoc;
-                  break;
-                }
+                if(altDoc && altDoc.querySelectorAll('item').length>0){ doc = altDoc; break; }
               } catch(_) {}
             }
-            if (!doc) console.warn('Direct fetch returned no items.');
           }
-        } else {
-          console.warn('Direct RSS fetch failed with status', r2.status);
         }
-      } catch (err) {
-        console.warn('Direct RSS fetch failed (likely CORS):', err && err.message ? err.message : err);
-      }
+      } catch (err) { }
     }
 
-    if (!doc) {
-      console.warn('Could not obtain RSS feed via proxies or direct fetch. Consider running your own proxy.');
-      return;
-    }
+    if (!doc) return;
 
     const items = Array.from(doc.querySelectorAll('item')).slice(0,6);
     if(items.length === 0) return;
@@ -353,22 +333,15 @@
   fetchNews();
   setInterval(fetchNews, 10 * 60 * 1000);
 
-  // === Icônes météo et mapping ===
+  // === Weather icons using currentColor so they adapt to theme ===
   function getWeatherIconSVG(code){
-    const sun = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><g stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="4"/></g></svg>`;
-    const cloud = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#111" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/></svg>`;
-    const sunCloud = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-hidden="true"><g stroke="#111" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="8.5" cy="7.5" r="3"/></g><path fill="#111" d="M27 15.5A3.5 3.5 0 0 0 23.5 12H23a4 4 0 0 0-7.9.9A3 3 0 0 0 12 16.9 3 3 0 0 0 15 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/></svg>`;
-    const rain = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#111" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g fill="#111"><path d="M9 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1zM15 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1zM12 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1z"/></g></svg>`;
-    const snow = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#111" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="12" y1="17" x2="12" y2="21"/><line x1="10" y1="19" x2="14" y2="19"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="10" y1="5" x2="14" y2="5"/></g></svg>`;
-    const thunder = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#111" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><path fill="#111" d="M11 14l-1 5 5-6h-4l1-8-5 6z"/></svg>`;
-    const fog = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-hidden="true"><path fill="#111" d="M27 15.5A3.5 3.5 0 0 0 23.5 12H23a4 4 0 0 0-7.9.9A3 3 0 0 0 12 16.9 3 3 0 0 0 15 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g fill="#111"><rect x="4" y="4" width="16" height="0" /><rect x="4" y="18" width="16" height="0" /><rect x="6" y="16" width="12" height="1"/><rect x="6" y="20" width="12" height="1"/></g></svg>`;
+    const sun = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="4"/></g></svg>`;
+    const cloud = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/></svg>`;
+    const sunCloud = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-hidden="true"><g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="8.5" cy="7.5" r="3"/></g><path fill="currentColor" d="M27 15.5A3.5 3.5 0 0 0 23.5 12H23a4 4 0 0 0-7.9.9A3 3 0 0 0 12 16.9 3 3 0 0 0 15 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/></svg>`;
+    const rain = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g fill="currentColor"><path d="M9 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1zM15 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1zM12 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1z"/></g></svg>`;
+    const snow = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="12" y1="17" x2="12" y2="21"/><line x1="10" y1="19" x2="14" y2="19"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="10" y1="5" x2="14" y2="5"/></g></svg>`;
+    const thunder = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><path fill="currentColor" d="M11 14l-1 5 5-6h-4l1-8-5 6z"/></svg>`;
+    const fog = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-hidden="true"><path fill="currentColor" d="M27 15.5A3.5 3.5 0 0 0 23.5 12H23a4 4 0 0 0-7.9.9A3 3 0 0 0 12 16.9 3 3 0 0 0 15 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g fill="currentColor"><rect x="4" y="4" width="16" height="0" /><rect x="4" y="18" width="16" height="0" /><rect x="6" y="16" width="12" height="1"/><rect x="6" y="20" width="12" height="1"/></g></svg>`;
 
     if (code === 0 || code === 1) return sun;
     if (code === 2) return sunCloud;
