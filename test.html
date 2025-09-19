@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>weimc - FM transmitter maps</title>
+  <link rel="icon" href="https://maps.fmdx.org/old/img/tx-med.png" type="image/png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 5px; z-index: 1000; }
+    #top-panel button, #top-panel input { margin-right: 8px; height: 30px; font-family: Arial, sans-serif; }
+    #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
+    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 330px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
+    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s, opacity 0.12s; opacity: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 3px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
+    th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
+    button.small { padding: 2px 5px; font-size: 12px; }
+
+    /* freq button: inline with no space between freq and pol letter */
+    .freq-btn { background: none; border: none; text-decoration: underline; cursor: pointer; padding: 0; color: #0645ad; font-family: inherit; display: inline-flex; align-items: baseline; gap: 0; }
+    .freq-btn.active { background: rgba(6,69,173,0.08); border-radius: 3px; }
+
+    /* visuals for sheet highlighting/dimming - no text color/bold changes */
+    tr.dim { background: #f4f4f4; } /* grayed background only */
+    tr.highlight { background: #fff7c2; } /* light yellow highlight only */
+    .freq-btn.criteria { background: rgba(255,235,150,0.6); border-radius: 3px; } /* freq button when used as criterion */
+    .station-name { cursor: pointer; color: #0645ad; text-decoration: underline; }
+
+    /* frequency value and polarization letter styling: freq normal weight/size, pol smaller and lowercase with NO gap */
+    .freq-btn .freq-val, .freq-btn .pol { font-size: inherit; font-weight: inherit; line-height: 1; }
+    .freq-btn .pol { text-transform: lowercase; }
+
+  </style>
+</head>
+<body>
+  <div id="top-panel">
+    <button id="load-db">Load DB</button>
+    <button id="save-db">Save DB</button>
+    <button id="add-tx">Add TX</button>
+    <input type="text" id="freq-filter" placeholder="Filter frequency (e.g. 105.7)" />
+    <input type="text" id="pi-filter" placeholder="Filter PI code (e.g. 8201)" />
+    <input type="text" id="eirp-filter" placeholder="Min EIRP (kW)" />
+    <input type="text" id="station-filter" placeholder="Filter station name (exact)" />
+    <button id="toggle-selected">Toggle Selected TXs</button>
+  </div>
+  <div id="tx-sheet"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+  window.onload = async function () {
+    // ------------------- tile detection + map init -------------------
+    // base tiles root you gave
+    const baseTilesRoot = 'https://weimctxmap.weizkule.xyz/tiles/';
+
+    // candidate map ids and patterns (common dynmap variants)
+    const candidateMapIds = ['flat','surface','normal','map','world','tiles','dynmap',''];
+    const candidatePatterns = [
+      '{map}{z}/{x}_{y}.png',
+      '{map}{z}/{x}/{y}.png',
+      '{map}{z}/{x}_{y}.jpg',
+      '{map}{z}/{x}/{y}.jpg'
+    ];
+
+    function joinRoot(root, seg) {
+      if (!root.endsWith('/')) root += '/';
+      if (seg && seg.startsWith('/')) seg = seg.slice(1);
+      return root + seg;
+    }
+    function buildUrl(root, mapid, pattern, z, x, y) {
+      const mapPart = mapid ? (mapid + '/') : '';
+      const p = pattern.replace('{map}', mapPart)
+                       .replace('{z}', z).replace('{x}', x).replace('{y}', y);
+      return joinRoot(root, p);
+    }
+
+    // test tile availability by loading an image
+    function testTemplate(url) {
+      return new Promise(resolve => {
+        const img = new Image();
+        let done = false;
+        img.onload = () => { if (!done) { done = true; resolve({ ok: true, url }); } };
+        img.onerror = () => { if (!done) { done = true; resolve({ ok: false, url }); } };
+        // cache-buster for detection
+        img.src = url + '?_test=' + Date.now();
+        // timeout fallback
+        setTimeout(() => { if (!done) { done = true; resolve({ ok: false, url }); } }, 3500);
+      });
+    }
+
+    async function detectTemplate() {
+      // small-ish sample tile to test
+      const testZ = 2, testX = 1, testY = 1;
+      for (const mapid of candidateMapIds) {
+        for (const pat of candidatePatterns) {
+          const url = buildUrl(baseTilesRoot, mapid, pat, testZ, testX, testY);
+          try {
+            const r = await testTemplate(url);
+            if (r.ok) {
+              // build template for Leaflet (use "{z}" "{x}" "{y}" placeholders)
+              const template = buildUrl(baseTilesRoot, mapid, pat, '{z}', '{x}', '{y}');
+              return template;
+            }
+          } catch (e) {
+            // ignore and continue trying
+          }
+        }
+      }
+      return null;
+    }
+
+    // map variable used by rest of your code
+    let map = null;
+    // tileLayer reference (if available)
+    let dynmapTileLayer = null;
+
+    // create a WebMercator map (no PNG fallback — you asked PNG not to be used anymore)
+    function createEmptyWebMercatorMap() {
+      const m = L.map('map', {
+        center: [0, 0],
+        zoom: 2,
+        minZoom: 0,
+        maxZoom: 7,
+        zoomSnap: 0.1
+      });
+      return m;
+    }
+
+    const detectedTemplate = await detectTemplate();
+    if (detectedTemplate) {
+      map = L.map('map', {
+        center: [0, 0],
+        zoom: 2,
+        minZoom: 0,
+        maxZoom: 7,
+        zoomSnap: 0.1
+      });
+
+      dynmapTileLayer = L.tileLayer(detectedTemplate, {
+        maxZoom: 7,
+        minZoom: 0,
+        tileSize: 256,
+        continuousWorld: true,
+        noWrap: false,
+        crossOrigin: true,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 2,
+        unloadInvisibleTiles: true
+      });
+      dynmapTileLayer.addTo(map);
+
+      // optional control to show/hide tiles (keeps UI simple)
+      L.control.layers({ "Dynmap tiles": dynmapTileLayer }, {}).addTo(map);
+      console.log('Dynmap tiles detected and loaded:', detectedTemplate);
+    } else {
+      // detection failed: create a simple WebMercator map and warn user
+      console.warn('Tile detection failed for', baseTilesRoot, ' — map will start without tile base. Check tile path or CORS.');
+      map = createEmptyWebMercatorMap();
+      // add a small attribution so map isn't blank-looking
+      L.tileLayer('', { attribution: 'Tiles not loaded — check console' }).addTo(map);
+    }
+
+    // Expose to global scope in case other code expects window.map
+    window.map = map;
+    window.dynmapTileLayer = dynmapTileLayer;
+    window.dynmapTileTemplate = detectedTemplate;
+
+    // ------------------- compatibility helpers -------------------
+    // compute distance between two projected points (crs1/crs2 are projection points)
+    function computeDistanceCRS(crs1, crs2) {
+      const dx = crs2.x - crs1.x, dy = crs2.y - crs1.y;
+      // If map uses CRS.Simple (legacy image coords), keep old 0.1 km per unit scaling.
+      if (map && map.options && map.options.crs === L.CRS.Simple) {
+        return (Math.sqrt(dx * dx + dy * dy) * 0.1).toFixed(1);
+      }
+      // For WebMercator projected units are meters -> convert to km
+      return (Math.sqrt(dx * dx + dy * dy) / 1000).toFixed(1);
+    }
+
+    function computeAzimuthCRS(crs1, crs2) {
+      let theta = Math.atan2(crs2.x - crs1.x, crs2.y - crs1.y) * 180 / Math.PI;
+      return ((theta + 360) % 360).toFixed(0);
+    }
+
+    // make helpers globally available for code below that expects them
+    window.computeDistanceCRS = computeDistanceCRS;
+    window.computeAzimuthCRS = computeAzimuthCRS;
+
+    // ------------------- rest of your original script (slightly adapted) -------------------
+
+    const icons = {
+      low:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-lo.png', iconSize:[19,19], iconAnchor:[9.5,19] }),
+      med:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-med.png', iconSize:[23,23], iconAnchor:[11.5,23] }),
+      high: L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-hi.png', iconSize:[27,27], iconAnchor:[13.5,27] }),
+      rx:   L.icon({ iconUrl:'https://maps.fmdx.org/old/img/rx.png',    iconSize:[34,26], iconAnchor:[17,26] })
+    };
+
+    const tooltipOffsets = { lo:  { x: 6,  y: 18 }, med: { x: 8,  y: 22 }, hi:  { x: 9,  y: 26 } };
+    const tooltipNudge = { lo:  { x: 3,  y: -19 }, med: { x: 4,  y: -23 }, hi:  { x: 5,  y: -27 } };
+
+    let txList = [], rx = null, addingTX = false, filterFreq = null, filterPI = null, filterEIRP = null, filterStationName = null, showSelected = false;
+    const selected = new Set();
+    let currentOpenTx = null; // id of TX currently shown in sheet
+
+    // ---- helper to normalize directional flags ----
+    function isDirectionalFlag(val) {
+      if (val === true) return true;
+      if (val === false || val === null || typeof val === 'undefined') return false;
+      if (typeof val === 'number') return val === 1;
+      if (typeof val === 'string') {
+        const v = val.trim().toUpperCase();
+        return (v === 'Y' || v === 'YES' || v === 'TRUE' || v === '1');
+      }
+      return false;
+    }
+    // ------------------------------------------------
+
+    document.getElementById('save-db').onclick = () => {
+      const saveable = txList.map(tx => ({ id: tx.id, name: tx.name, stations: tx.stations, point: tx.point, latlng: tx.latlng }));
+      const blob = new Blob([JSON.stringify({txList: saveable})], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fm_tx_db.json';
+      a.click();
+    };
+
+    async function loadDB(urlFallback) {
+      try {
+        const res = await fetch(urlFallback);
+        const loaded = await res.json();
+        loaded.txList.forEach(t => { if (t.point || t.latlng) createTX(t, true); });
+      } catch {
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+        inp.onchange = e => {
+          const r = new FileReader();
+          r.onload = () => JSON.parse(r.result).txList.forEach(t => { if (t.point || t.latlng) createTX(t, true); });
+          r.readAsText(e.target.files[0]);
+        };
+        inp.click();
+      }
+    }
+
+    document.getElementById('load-db').onclick = () => loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
+    loadDB('https://raw.githubusercontent.com/frenchkiddo6969/weizkule.github.io/refs/heads/main/weimc/fmmap/txs.json');
+
+    document.getElementById('add-tx').onclick = () => { addingTX = true; map.getContainer().style.cursor='crosshair'; };
+    map.on('click', e => {
+      if(!addingTX) return;
+      const name = prompt('Site name:'); if(!name){addingTX=false;map.getContainer().style.cursor='';return;}
+      // createTX expects data.point for legacy or data.latlng for proper geo coords.
+      // here we create using real latlng (tile map uses geographic lat/lng).
+      createTX({id:Date.now(),name,stations:[],latlng:[e.latlng.lat, e.latlng.lng]});
+      addingTX=false; map.getContainer().style.cursor='';
+    });
+
+    function createTX(data,load=false) {
+      // normalize incoming station directional flags (important for DB-loaded entries)
+      if (data.stations && Array.isArray(data.stations)) {
+        data.stations.forEach(s => {
+          try {
+            s.directional = isDirectionalFlag(s.directional);
+            if (s.directionAngle !== undefined && s.directionAngle !== null) {
+              const na = parseInt(s.directionAngle, 10);
+              s.directionAngle = (!isNaN(na) && na >= 0 && na <= 359) ? na : null;
+            } else {
+              s.directionAngle = null;
+            }
+          } catch (e) {
+            s.directional = false;
+            s.directionAngle = null;
+          }
+        });
+      }
+
+      // Choose latlng:
+      //  - prefer explicit data.latlng (real geo coords)
+      //  - fallback to legacy data.point conversion only if map CRS is Simple (shouldn't happen since we load tiles),
+      //    otherwise if legacy point present we'll place marker at map center and flag it for manual reposition.
+      let latlng = null;
+      if (data.latlng && Array.isArray(data.latlng) && data.latlng.length >= 2) {
+        latlng = L.latLng(data.latlng[0], data.latlng[1]);
+      } else if (data.point && map.options && map.options.crs === L.CRS.Simple) {
+        // legacy behaviour (only when map is Simple)
+        latlng = map.layerPointToLatLng(data.point);
+      } else if (data.point) {
+        // we have a legacy point but the map is WebMercator — we can't reliably auto-convert.
+        // place the marker at the map center and store the legacy point for manual repositioning.
+        console.warn('Legacy point found but map is WebMercator; placing marker at center. Reposition manually.', data.point);
+        latlng = map.getCenter();
+        // store original point so later manual correction is possible
+        data._legacyPoint = data.point;
+      } else {
+        // no coords — place at center
+        latlng = map.getCenter();
+      }
+
+      const crsPt = map.options.crs.project(latlng);
+      const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
+      const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo', highlightCriteria: null };
+
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      txList.push(tx); updateIcon(tx); attach(tx);
+      if(load) marker.fire('add');
+    }
+
+    function attach(tx) {
+      tx.marker.on('contextmenu', () => {
+        if (tx.line) {
+          map.removeLayer(tx.line);
+          tx.line = null;
+          selected.delete(tx.id);
+        } else {
+          drawTrail(tx);
+          selected.add(tx.id);
+        }
+      });
+      tx.marker.on('click', () => {
+        if (sheet.style.display === 'block' && currentOpenTx === tx.id) {
+          sheet.style.display = 'none';
+          currentOpenTx = null;
+        } else {
+          sheet.style.display = 'block';
+          openSheet(tx);
+        }
+      });
+      tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); repositionTipIfNeeded(tx); });
+      tx.marker.on('drag', ()=> repositionTipIfNeeded(tx));
+      tx.marker.on('mouseover',()=>showTip(tx));
+      tx.marker.on('mouseout',hideTip);
+    }
+
+    function drawTrail(tx) {
+      if(!rx) return;
+      if(tx.line) map.removeLayer(tx.line);
+      tx.line = L.polyline([rx.getLatLng(),tx.marker.getLatLng()],{color:'red',weight:2,opacity:0.7}).addTo(map);
+    }
+
+    map.on('contextmenu',e=>{
+      if(rx) return;
+      rx = L.marker(e.latlng,{icon:icons.rx,draggable:true}).addTo(map);
+      rx.crs = map.options.crs.project(e.latlng);
+      const pt = map.latLngToLayerPoint(e.latlng);
+      document.cookie = 'rx_x=' + pt.x + ';rx_y=' + pt.y;
+      rx.on('dragend',()=>{
+        const ll=rx.getLatLng(); rx.crs=map.options.crs.project(ll);
+        txList.forEach(t=> t.line && drawTrail(t));
+      });
+    });
+
+    const sheet=document.getElementById('tx-sheet');
+
+    function openSheet(tx){
+      currentOpenTx = tx.id;
+      sheet.innerHTML = '';
+      const h = document.createElement('h4'); h.textContent = tx.name; sheet.appendChild(h);
+
+      const table = document.createElement('table');
+      const hdr = table.insertRow();
+      ['Freq','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
+
+      // Decide per-row highlight/dim rules:
+      // If tx.highlightCriteria is set, use that. Otherwise use global filterPI/filterEIRP/filterFreq/filterStationName.
+      let crit = tx.highlightCriteria || null;
+      if (!crit) {
+        if (filterStationName) crit = { type: 'name', value: filterStationName };
+        else if (filterFreq) crit = { type: 'freq', value: filterFreq };
+        else if (filterPI) crit = { type: 'pi', value: filterPI };
+        else if (filterEIRP) crit = { type: 'eirp', value: filterEIRP };
+        else if (filterFreq || filterPI || filterEIRP) crit = { type: 'global', value: null }; // fallback global sentinel when any global filter active
+      }
+
+      // Build rows
+      tx.stations.forEach((s, i) => {
+        const r = table.insertRow();
+
+        // Determine highlight/dim state for this station:
+        let isMatch = true;
+        if (crit) {
+          if (crit.type === 'freq') {
+            isMatch = Number(s.freq) === Number(crit.value);
+          } else if (crit.type === 'pi') {
+            isMatch = (s.pi && String(s.pi).toUpperCase() === String(crit.value).toUpperCase());
+          } else if (crit.type === 'eirp') {
+            isMatch = (Number(s.kw) || 0) >= Number(crit.value);
+          } else if (crit.type === 'name') {
+            isMatch = (s.name && String(s.name).trim().toUpperCase() === String(crit.value).toUpperCase());
+          } else if (crit.type === 'global') {
+            const freqMatch = !filterFreq || Number(s.freq) === Number(filterFreq);
+            const piMatch = !filterPI || (s.pi && String(s.pi).toUpperCase() === String(filterPI).toUpperCase());
+            const eirpMatch = !filterEIRP || (Number(s.kw) || 0) >= filterEIRP;
+            isMatch = freqMatch && piMatch && eirpMatch;
+          } else {
+            isMatch = true;
+          }
+        }
+
+        // apply only background changes (no text color/bold)
+        if (crit && isMatch) r.classList.add('highlight'); else if (crit && !isMatch) r.classList.add('dim');
+
+        const freqCell = r.insertCell();
+        const freqBtn = document.createElement('button');
+        freqBtn.className = 'freq-btn';
+
+        // show frequency and small pol letter to the right (lowercase) with NO space between them
+        const freqText = s.freq !== undefined ? String(s.freq) : '';
+        const polText = (s.pol || '').toString().trim();
+        freqBtn.innerHTML = '<span class="freq-val">' + freqText + '</span>' + (polText ? '<span class="pol">' + polText.charAt(0).toLowerCase() + '</span>' : '');
+        freqBtn.setAttribute('aria-label', freqText + (polText ? polText.charAt(0).toLowerCase() : ''));
+
+        // mark freq button visually if current tx.highlightCriteria or global freq filter matches
+        if ((tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq))
+            || (filterFreq && Number(filterFreq) === Number(s.freq))) {
+          freqBtn.classList.add('criteria');
+        }
+
+        freqBtn.onclick = () => {
+          // toggle coverage (existing behavior)
+          toggleCoverageForStation(tx, i, freqBtn);
+          // toggle highlight criterion for this tx by freq
+          if (tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq)) {
+            tx.highlightCriteria = null;
+          } else {
+            tx.highlightCriteria = { type: 'freq', value: s.freq };
+          }
+          openSheet(tx);
+        };
+        if (tx.stationCircles[i]) freqBtn.classList.add('active');
+        freqCell.appendChild(freqBtn);
+
+        const nameCell = r.insertCell();
+        nameCell.innerText = s.name || '';
+        // make the station name clickable: clicking it populates the station-filter and applies filters
+        nameCell.className = 'station-name';
+        nameCell.title = 'Click to filter by this station';
+        nameCell.onclick = () => {
+          const sval = s.name ? s.name.trim() : '';
+          document.getElementById('station-filter').value = sval;
+          filterStationName = sval.length ? sval.toUpperCase() : null;
+          applyFilters();
+        };
+
+        const piCell = r.insertCell(); piCell.innerText = s.pi || '';
+        const kwCell = r.insertCell(); kwCell.innerText = (s.kw !== undefined && s.kw !== null && !isNaN(s.kw)) ? (Number(s.kw).toFixed(3) + ' kW') : '';
+
+        const ctlCell = r.insertCell();
+        const e = document.createElement('button'); e.innerText = '✎'; e.className='small';
+        e.onclick = () => { editStation(tx, i); };
+        const d = document.createElement('button'); d.innerText='🗑'; d.className='small';
+        d.onclick = () => {
+          if (tx.stationCircles[i]) {
+            try { map.removeLayer(tx.stationCircles[i].layer); } catch(e) {}
+            delete tx.stationCircles[i];
+          }
+          tx.stations.splice(i,1);
+          openSheet(tx);
+          updateIcon(tx);
+        };
+        ctlCell.append(e,d);
+      });
+
+      const add = document.createElement('button'); add.innerText='Add station'; add.onclick=()=>addStation(tx);
+      const del = document.createElement('button'); del.innerText='Delete TX'; del.style.marginLeft='10px';
+      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; currentOpenTx = null; };
+      sheet.append(table, add, del);
+    }
+
+    function addStation(tx){
+      const f=parseFloat(prompt('Freq(65.75-108):'));
+      if(isNaN(f)||f<65.75||f>108)return;
+      const p=prompt('Pol(H,V,C,M,?):');
+      const n=prompt('Name:');
+      const pi=prompt('PI:');
+      const kwInput=prompt('kW:');
+      const kw=parseFloat(kwInput);
+
+      // directional prompt (Y/N)
+      const dirFlag = (prompt('Make this station directional? (Y/N)') || '').trim().toUpperCase();
+      let directional = false, directionAngle = null;
+      if (dirFlag === 'Y' || dirFlag === 'YES') {
+        directional = true;
+        const angleInput = prompt('Direction angle (0-359, 0 = North, clockwise):', '0');
+        const angleNum = parseInt(angleInput, 10);
+        if (!isNaN(angleNum) && angleNum >= 0 && angleNum <= 359) directionAngle = angleNum;
+        else { directional = false; directionAngle = null; }
+      }
+
+      tx.stations.push({freq:f,pol:p,name:n,pi:pi,kw:kw, directional: directional, directionAngle: directionAngle});
+
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      openSheet(tx);
+      updateIcon(tx);
+    }
+
+    function editStation(tx,i){
+      const s=tx.stations[i];
+      const f=parseFloat(prompt('Freq:',s.freq));
+      if(isNaN(f)||f<65.75||f>108)return;
+      s.freq=f;
+      s.pol=prompt('Pol:',s.pol);
+      s.name=prompt('Name:',s.name);
+      s.pi=prompt('PI:',s.pi);
+      const kwInput = prompt('kW:', s.kw);
+      s.kw = parseFloat(kwInput);
+
+      const dirFlag = (prompt('Make this station directional? (Y/N)', s.directional ? 'Y' : 'N') || '').trim().toUpperCase();
+      if (dirFlag === 'Y' || dirFlag === 'YES') {
+        s.directional = true;
+        const angleInput = prompt('Direction angle (0-359, 0 = North, clockwise):', (typeof s.directionAngle === 'number' && !isNaN(s.directionAngle)) ? String(s.directionAngle) : '0');
+        const angleNum = parseInt(angleInput, 10);
+        if (!isNaN(angleNum) && angleNum >= 0 && angleNum <= 359) s.directionAngle = angleNum; else { s.directional = false; s.directionAngle = null; }
+      } else {
+        s.directional = false;
+        s.directionAngle = null;
+      }
+
+      if (tx.stations && tx.stations.length) {
+        tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
+      }
+
+      openSheet(tx);
+      updateIcon(tx);
+    }
+
+    function updateIcon(tx){
+      let m = 0;
+      const filteredStations = tx.stations.filter(s => {
+        const freqMatch = !filterFreq || s.freq === filterFreq;
+        const piMatch = !filterPI || (s.pi && s.pi.toUpperCase() === filterPI);
+        const eirpMatch = !filterEIRP || (s.kw || 0) >= filterEIRP;
+        const nameMatch = !filterStationName || (s.name && s.name.trim().toUpperCase() === filterStationName);
+        return freqMatch && piMatch && eirpMatch && nameMatch;
+      });
+      if (filteredStations.length) m = Math.max(...filteredStations.map(s => s.kw || 0));
+      else if (!filterFreq && !filterPI && !filterEIRP && !filterStationName && tx.stations.length) m = Math.max(...tx.stations.map(s => s.kw || 0));
+
+      if (m >= 5) { tx.marker.setIcon(icons.high); tx.iconType = 'hi'; }
+      else if (m >= 0.5) { tx.marker.setIcon(icons.med); tx.iconType = 'med'; }
+      else { tx.marker.setIcon(icons.low); tx.iconType = 'lo'; }
+    }
+
+    const tip = document.createElement('div');
+    tip.className = 'tooltip-box';
+    document.body.append(tip);
+    let hoveredTx = null;
+
+    function positionTipForTx(tx) {
+      if (!tx) return;
+      if (!rx) return;
+
+      const crsRx = rx.crs || map.options.crs.project(rx.getLatLng());
+      const crsTx = tx.crs || map.options.crs.project(tx.marker.getLatLng());
+      // use computeDistanceCRS so it's CRS-aware
+      const distKm = computeDistanceCRS(crsTx, crsRx);
+      const distKmRounded = Math.round(Number(distKm));
+      const az = computeAzimuthCRS(crsTx, crsRx);
+
+      tip.innerHTML = '';
+      const nameNode = document.createTextNode(tx.name + ' – ');
+      const kmSpan = document.createElement('span');
+      kmSpan.textContent = distKmRounded + ' km';
+      if (distKmRounded >= 700) { kmSpan.style.color = 'red'; kmSpan.style.fontWeight = 'bold'; }
+      else if (distKmRounded >= 400) { kmSpan.style.color = 'black'; kmSpan.style.fontWeight = 'bold'; }
+      else { kmSpan.style.color = 'black'; kmSpan.style.fontWeight = 'normal'; }
+      const restNode = document.createTextNode(' – ' + az + '°');
+      tip.appendChild(nameNode);
+      tip.appendChild(kmSpan);
+      tip.appendChild(restNode);
+
+      let clientX, clientY;
+      const iconEl = (tx.marker && tx.marker.getElement) ? tx.marker.getElement() : null;
+
+      if (iconEl && iconEl.getBoundingClientRect) {
+        const rect = iconEl.getBoundingClientRect();
+        clientX = rect.left;
+        clientY = rect.top + rect.height;
+      } else {
+        const pos = map.latLngToContainerPoint(tx.marker.getLatLng());
+        const containerRect = map.getContainer().getBoundingClientRect();
+        clientX = containerRect.left + pos.x;
+        clientY = containerRect.top + pos.y;
+      }
+
+      const iconType = tx.iconType || 'lo';
+      const offset = tooltipOffsets[iconType] || {x:0,y:0};
+      const nudge  = tooltipNudge[iconType]  || {x:0,y:0};
+
+      tip.style.visibility = 'hidden';
+      tip.style.display = 'block';
+      const left = Math.round(clientX + offset.x + nudge.x);
+      const top  = Math.round(clientY + offset.y + nudge.y);
+      tip.style.left = left + 'px';
+      tip.style.top  = top + 'px';
+      tip.style.visibility = 'visible';
+      tip.style.opacity = '1';
+    }
+
+    function showTip(tx) { hoveredTx = tx; if (!rx) return; positionTipForTx(tx); }
+    function hideTip() { hoveredTx = null; tip.style.display = 'none'; tip.style.opacity = '0'; }
+    function repositionTipIfNeeded(tx) { if (hoveredTx && tx && hoveredTx.id === tx.id) positionTipForTx(tx); }
+    map.on('move zoom', () => { if (hoveredTx) positionTipForTx(hoveredTx); });
+
+    function applyFilters() {
+      txList.forEach(tx => {
+        const matchesFreq = !filterFreq || tx.stations.some(s => s.freq === filterFreq);
+        const matchesPI = !filterPI || tx.stations.some(s => s.pi && s.pi.toUpperCase() === filterPI);
+        const matchesEIRP = !filterEIRP || tx.stations.some(s => (s.kw || 0) >= filterEIRP);
+        const matchesName = !filterStationName || tx.stations.some(s => s.name && s.name.trim().toUpperCase() === filterStationName);
+        const shouldShow = matchesFreq && matchesPI && matchesEIRP && matchesName;
+        if (shouldShow) {
+          if (!map.hasLayer(tx.marker)) map.addLayer(tx.marker);
+        } else {
+          if (map.hasLayer(tx.marker)) map.removeLayer(tx.marker);
+        }
+        updateIcon(tx);
+      });
+
+      // If a sheet is open, refresh it so the dim/highlight state reflects current global filters
+      updateSheetIfOpen();
+    }
+
+    document.getElementById('freq-filter').oninput = e => { filterFreq = parseFloat(e.target.value) || null; applyFilters(); };
+    document.getElementById('pi-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterPI = input.length ? input : null; applyFilters(); };
+    document.getElementById('eirp-filter').oninput = e => { filterEIRP = parseFloat(e.target.value) || null; applyFilters(); };
+    document.getElementById('station-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterStationName = input.length ? input : null; applyFilters(); };
+
+    document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
+
+    /********* Coverage polygon logic (seeded, directional-only rear bulge) *********/
+
+    // seeded PRNG (mulberry32)
+    function seedFromString(str) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
+      return h;
+    }
+    function mulberry32(a) {
+      return function() {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    function degToRad(d){ return d * Math.PI/180; }
+
+    // createCoveragePolygon:
+    // - non-directional stations (directional === false) always get a regular slightly-jittered circle (no V/H special lobes)
+    // - directional stations get pol-specific shaping AND the focused rear bulge (placed at directionAngle + 180)
+    function createCoveragePolygon(centerLatLng, radiusKm, tx, stationIndex, directional=false, directionAngle=null, segments = 64) {
+      if (!radiusKm || radiusKm <= 0) return L.polygon([], {color:'blue', weight:2, opacity:0.6, fillOpacity:0.08});
+
+      const quant = Math.round(radiusKm * 10);
+      const seedStr = String(tx.id) + '_' + String(quant);
+      const rnd = mulberry32(seedFromString(seedStr));
+
+      const centerCRS = map.options.crs.project(centerLatLng);
+      const latlngs = [];
+      const R = radiusKm;
+
+      // normalize directionAngle if provided
+      let dirAngle = null;
+      if (typeof directionAngle === 'number' && !isNaN(directionAngle)) {
+        dirAngle = ((directionAngle % 360) + 360) % 360;
+      }
+
+      // If directional, place bulge behind the TX: bulgeDir = dirAngle + 180 (mod 360)
+      // Only compute bulgeDir when directional === true and dirAngle exists.
+      const bulgeDir = (directional === true && dirAngle !== null) ? ((dirAngle + 180) % 360) : null;
+
+      // tunables:
+      const coneDeg = 30;      // half-angle for the focused rear bulge (±coneDeg)
+      const maxBias  = 0.40;   // up to +40% at exact rear
+      const smallJitterRange = 0.06; // ±3% per-vertex jitter for non-directional / sides
+
+      for (let i = 0; i < segments; i++) {
+        const a = (i / segments) * Math.PI * 2; // 0 = east, ccw positive
+        const angleDeg = (90 - (a * 180 / Math.PI) + 360) % 360; // 0 = north, clockwise
+
+        // compute baseRadius:
+        // - If NOT directional: keep baseRadius as a simple circular R (no V/H special lobes).
+        // - If directional: apply pol-specific modulation (C/H/V) as before.
+        let baseRadius = R;
+        let pol = null;
+        try { const s = tx.stations && tx.stations[stationIndex]; if (s && s.pol) pol = String(s.pol).toUpperCase(); } catch (e) { pol = null; }
+
+        if (directional === true) {
+          // directional: allow polarization-specific shaping
+          if (pol === 'C' || pol === 'O') {
+            baseRadius = R;
+          } else if (pol === 'H') {
+            // H -> slightly uneven octagon
+            const nearestVertex = Math.round(angleDeg / 45) * 45;
+            let delta = Math.abs(((angleDeg - nearestVertex + 540) % 360) - 180);
+            if (delta > 180) delta = 360 - delta;
+            const t = 1 - Math.min(delta, 22.5) / 22.5;
+            const octFactor = 0.94 + 0.12 * t;
+            const localJitter = 1 + (rnd() - 0.5) * 0.06;
+            baseRadius = R * octFactor * localJitter;
+          } else if (pol === 'V') {
+            if (dirAngle === null) {
+              const delta = Math.min(Math.abs(((angleDeg - 0 + 540) % 360) - 180), 180);
+              if (delta <= 90) baseRadius = R * 0.9;
+              else { const theta = a; const wFactor = 1 + 0.18 * Math.cos(4 * theta); baseRadius = R * wFactor * 0.85; }
+            } else {
+              const delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180);
+              if (delta <= 90) baseRadius = R * 0.9;
+              else { const relRad = degToRad(angleDeg - dirAngle + 90); const wFactor = 1 + 0.18 * Math.cos(4 * relRad); baseRadius = R * wFactor * 0.85; }
+            }
+          } else {
+            baseRadius = R;
+          }
+
+          // directional front/back smoothing (unchanged)
+          if (dirAngle !== null) {
+            let delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180); // 0 = front, 180 = back
+            const t = (Math.cos(degToRad(delta)) + 1) / 2;
+            const backMin = 0.2 * R;
+            baseRadius = backMin + (baseRadius - backMin) * t;
+          }
+        } else {
+          // NOT directional -> force circular base radius (no pol lobes)
+          baseRadius = R;
+        }
+
+        // default small jitter applied to all stations (C/H/V get slight unevenness even when non-directional)
+        const defaultJitter = 1 + (rnd() - 0.5) * smallJitterRange; // e.g. ±3%
+
+        // apply REAR bulge ONLY when directional === true and bulgeDir exists
+        let perturb = defaultJitter;
+        if (directional === true && bulgeDir !== null) {
+          const raw = Math.abs(((angleDeg - bulgeDir + 360) % 360));
+          const angDiff = Math.min(raw, 360 - raw); // 0..180 where 0 = exact rear
+
+          if (angDiff <= coneDeg) {
+            const frac = 1 - (angDiff / coneDeg); // 1 at center, 0 at cone edge
+            let biasMain = frac;
+
+            let combinedFrac = biasMain;
+            const dblChance = 0.35; // ~35% of bulges become double-bulges
+            if (rnd() < dblChance) {
+              const offset = 8 + Math.floor(rnd() * 11);
+              const raw2 = Math.abs(((angleDeg - (bulgeDir + offset) + 360) % 360));
+              const angDiff2 = Math.min(raw2, 360 - raw2);
+              let frac2 = 0;
+              if (angDiff2 <= coneDeg) frac2 = 1 - (angDiff2 / coneDeg);
+              combinedFrac = Math.max(biasMain, frac2);
+            }
+
+            const bias = 1 + maxBias * combinedFrac;
+            const localJitter = 1 + (rnd() - 0.5) * 0.08; // ±4%
+            perturb = bias * localJitter;
+          } else {
+            perturb = defaultJitter;
+          }
+        } else {
+          perturb = defaultJitter;
+        }
+
+        const r = Math.max(0.1, baseRadius * perturb);
+
+        // convert r (km) to CRS units (CRS uses 0.1 km per unit for legacy Simple CRS,
+        // but here we compute in km and unproject points so the unproject handles it.
+        const dx = Math.cos(a) * r * 10;
+        const dy = Math.sin(a) * r * 10;
+        const ptCRS = L.point(centerCRS.x + dx, centerCRS.y + dy);
+        latlngs.push(map.options.crs.unproject(ptCRS));
+      }
+
+      return L.polygon(latlngs, { color: 'blue', weight:2, opacity:0.6, fillOpacity:0.08 });
+    }
+
+    function kW_to_km_radius(kw) {
+      const k = Number(kw) || 0;
+      if (k <= 0) return 0;
+      const log = Math.log10(k);
+      const radius = -3 * (log * log) + 37.5 * log + 65;
+      return Math.max(0, radius);
+    }
+
+    function toggleCoverageForStation(tx, stationIndex, freqBtnElement) {
+      const s = tx.stations[stationIndex];
+      if (!s) return;
+      const kw = Number(s.kw) || 0;
+      const radiusKm = kW_to_km_radius(kw);
+      // remove existing
+      if (tx.stationCircles && tx.stationCircles[stationIndex]) {
+        try { map.removeLayer(tx.stationCircles[stationIndex].layer); } catch (e) {}
+        delete tx.stationCircles[stationIndex];
+        if (freqBtnElement) freqBtnElement.classList.remove('active');
+        return;
+      }
+
+      // normalize directional flag for this station (handles 'Y'/'N' from DB)
+      const dirFlag = isDirectionalFlag(s.directional);
+
+      // create polygon using TX-level seeded shape (same EIRP -> same shape), but allow directional modification per-station
+      const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, stationIndex, dirFlag, s.directionAngle);
+      poly.addTo(map);
+      tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s.directionAngle };
+      if (freqBtnElement) freqBtnElement.classList.add('active');
+    }
+
+    function updateCoverageForTX(tx) {
+      if (!tx.stationCircles) return;
+      Object.keys(tx.stationCircles).forEach(idx => {
+        const sc = tx.stationCircles[idx];
+        if (!sc) return;
+        try { map.removeLayer(sc.layer); } catch (e) {}
+        const s = tx.stations[idx];
+        const radiusKm = sc.km || (s ? kW_to_km_radius(s.kw) : 0);
+        const dirFlag = isDirectionalFlag(s ? s.directional : false);
+        const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, idx, dirFlag, s && s.directionAngle);
+        poly.addTo(map);
+        tx.stationCircles[idx] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s && s.directionAngle };
+      });
+    }
+
+    function updateAllCoverage() { txList.forEach(tx => updateCoverageForTX(tx)); }
+    map.on('zoomend', updateAllCoverage); map.on('moveend', updateAllCoverage);
+
+    function removeAllCoverage() {
+      txList.forEach(tx => {
+        if (!tx.stationCircles) return;
+        Object.values(tx.stationCircles).forEach(c => { try{ map.removeLayer(c.layer); } catch {} });
+        tx.stationCircles = {};
+      });
+    }
+
+    // refresh open sheet if any
+    function updateSheetIfOpen() {
+      if (!currentOpenTx) return;
+      const tx = txList.find(t => t.id === currentOpenTx);
+      if (tx) {
+        // If there are global filters or station name filter and tx doesn't have a tx.highlightCriteria, set sentinel so sheet dims/highlights
+        if (!tx.highlightCriteria && (filterPI || filterEIRP || filterFreq || filterStationName)) {
+          tx.highlightCriteria = { type: 'global', value: null };
+          const prev = tx.highlightCriteria;
+          openSheet(tx);
+          tx.highlightCriteria = null;
+        } else {
+          openSheet(tx);
+        }
+      } else {
+        currentOpenTx = null;
+        sheet.style.display = 'none';
+      }
+    }
+
+    /********* End coverage logic *********/
+
+  };
+  </script>
+</body>
+</html>
