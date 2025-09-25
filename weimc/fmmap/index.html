@@ -619,7 +619,28 @@
     document.getElementById('eirp-filter').oninput = e => { filterEIRP = parseFloat(e.target.value) || null; applyFilters(); };
     document.getElementById('station-filter').oninput = e => { const input = e.target.value.trim().toUpperCase(); filterStationName = input.length ? input : null; applyFilters(); };
 
-    document.getElementById('toggle-selected').onclick=()=>{ showSelected=!showSelected; txList.forEach(tx=>{ if(showSelected&&!selected.has(tx.id))map.removeLayer(tx.marker); else if(!map.hasLayer(tx.marker))map.addLayer(tx.marker); }); };
+document.getElementById('toggle-selected').onclick = () => {
+  showSelected = !showSelected;
+
+  // update button label so it's obvious what's active
+  const btn = document.getElementById('toggle-selected');
+  btn.innerText = showSelected ? 'Show: Selected & Trailed' : 'Show All TXs';
+
+  txList.forEach(tx => {
+    // when the toggle is ON we want to show:
+    //  - TXs that are explicitly selected
+    //  - TXs that currently have a trail (tx.line)
+    // when the toggle is OFF we show all TXs
+    const shouldShow = !showSelected || selected.has(tx.id) || (tx.line != null);
+
+    if (shouldShow) {
+      if (!map.hasLayer(tx.marker)) map.addLayer(tx.marker);
+    } else {
+      if (map.hasLayer(tx.marker)) map.removeLayer(tx.marker);
+    }
+  });
+};
+
 
     /********* Coverage polygon logic (seeded, directional-only rear bulge) *********/
 
