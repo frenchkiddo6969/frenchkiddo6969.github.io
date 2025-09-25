@@ -8,12 +8,12 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 5px; z-index: 1000; }
-    #top-panel button, #top-panel input { margin-right: 8px; height: 30px; font-family: Arial, sans-serif; }
+    #top-panel { position: absolute; top: 0; left: 0; right: 0; height: 50px; background: #333; display: flex; align-items: center; padding: 6px; z-index: 1000; gap:8px; }
+    #top-panel button, #top-panel input, #top-panel label { height: 30px; font-family: Arial, sans-serif; }
     #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
-    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 330px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; font-family: Arial, sans-serif; }
-    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; font-family: Arial, sans-serif; transition: color 0.12s, font-weight 0.12s, opacity 0.12s; opacity: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 3px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-family: Arial, sans-serif; }
+    #tx-sheet { position: absolute; top: 50px; left: 10px; width: 330px; background: #fff; padding: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); z-index: 1001; display: none; max-height: 80%; overflow-y: auto; }
+    .tooltip-box { position: absolute; pointer-events: none; background: rgba(255,255,255,0.95); padding: 5px; border: 1px solid #666; font-size: 12px; z-index: 2000; white-space: nowrap; transition: color 0.12s, font-weight 0.12s, opacity 0.12s; opacity: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 3px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
     th, td { border: 1px solid #ccc; padding: 4px; font-size: 12px; }
     button.small { padding: 2px 5px; font-size: 12px; }
 
@@ -31,6 +31,14 @@
     .freq-btn .freq-val, .freq-btn .pol { font-size: inherit; font-weight: inherit; line-height: 1; }
     .freq-btn .pol { text-transform: lowercase; }
 
+    /* compact control styles */
+    .control-group { display:flex; align-items:center; gap:6px; color:#fff; }
+    .control-group input[type='number'] { width:84px; padding:4px; }
+    .control-group input[type='checkbox'] { transform:scale(1.1); }
+    .control-actions button { padding:6px 8px; }
+
+    /* hide the left-image resize controls */
+    #left-image-controls { display: none !important; }
   </style>
 </head>
 <body>
@@ -38,6 +46,23 @@
     <button id="load-db">Load DB</button>
     <button id="save-db">Save DB</button>
     <button id="add-tx">Add TX</button>
+
+    <!-- LEFT IMAGE RESIZE CONTROLS (INJECTED) -->
+    <div id="left-image-controls" class="control-group" style="margin-left:8px">
+      <label style="color:#fff;">Left W:</label>
+      <input id="left-width-input" type="number" step="1" min="1" value="1072" title="Width in CRS units" />
+      <label style="color:#fff;">Left H:</label>
+      <input id="left-height-input" type="number" step="1" min="1" value="2160" title="Height in CRS units (leave for auto or change)" />
+      <label style="color:#fff;">V off:</label>
+      <input id="left-voffset-input" type="number" step="1" value="6496" title="Vertical offset in CRS units" />
+      <label style="color:#fff">Preserve aspect</label>
+      <input id="left-preserve-check" type="checkbox" title="Preserve pixel aspect ratio when checked" />
+      <div class="control-actions">
+        <button id="left-apply-btn">Apply</button>
+        <button id="left-center-btn">Center</button>
+      </div>
+    </div>
+
     <input type="text" id="freq-filter" placeholder="Filter frequency (e.g. 105.7)" />
     <input type="text" id="pi-filter" placeholder="Filter PI code (e.g. 8201)" />
     <input type="text" id="eirp-filter" placeholder="Min EIRP (kW)" />
@@ -51,10 +76,118 @@
   <script>
   window.onload = function () {
     const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 2, zoomSnap: 0.1 });
-    const imgUrl = 'https://i.soupco.net/u/JC4lap.png';
-    const bounds = [[0,0],[15904,15968]];
-    L.imageOverlay(imgUrl, bounds).addTo(map);
-    map.fitBounds(bounds);
+
+    // === CONFIG: where to place the extra left image ===
+    // main image original dimensions (CRS units used by the original file)
+    const MAIN_WIDTH_UNITS = 15904;   // original vertical span in your setup
+    const MAIN_HEIGHT_UNITS = 15968;  // original horizontal span in your setup
+
+    // image URLs
+    const mainImgUrl = 'https://i.soupco.net/u/JC4lap.png';
+    const leftImgUrl = 'https://i.soupco.net/u/2MEaOg.png';
+
+    // main bounds remain exactly as before
+    const mainBounds = [[0, 0], [MAIN_WIDTH_UNITS, MAIN_HEIGHT_UNITS]];
+
+    // add the main image overlay exactly as before and do NOT change its bounds
+    const mainOverlay = L.imageOverlay(mainImgUrl, mainBounds, { interactive: false, opacity: 1.0, zIndex: 500 }).addTo(map);
+
+    // KEEP the fitBounds call on the main bounds so the map initial view focuses on the main image and
+    // the main image does not move. Users can pan left to see the extra image.
+    map.fitBounds(mainBounds);
+
+    // left overlay handle (we will add and replace this dynamically)
+    let leftOverlay = null;
+    let lastLeftHeightUnits = MAIN_WIDTH_UNITS; // default vertical span to match previous behaviour
+
+    // helper: remove previous left overlay if present
+    function removeLeftOverlay() {
+      if (leftOverlay) {
+        try { map.removeLayer(leftOverlay); } catch (e) {}
+        leftOverlay = null;
+      }
+    }
+
+    // compute left bounds using the "first-coordinate-is-vertical" convention used previously
+    function leftBoundsFromParams(widthUnits, heightUnits, vOffsetUnits) {
+      const leftSouthWest = [vOffsetUnits, -Math.abs(widthUnits)];
+      const leftNorthEast = [vOffsetUnits + Math.abs(heightUnits), 0];
+      return [leftSouthWest, leftNorthEast];
+    }
+
+    // add/update left overlay. If preserveAspect true, compute height from image pixel aspect ratio
+    function addLeftOverlay({ widthUnits = 6000, heightUnits = null, vOffsetUnits = 0, preserveAspect = false } = {}) {
+      removeLeftOverlay();
+
+      const applyOverlay = (hUnits) => {
+        lastLeftHeightUnits = hUnits;
+        const bounds = leftBoundsFromParams(widthUnits, hUnits, vOffsetUnits);
+        leftOverlay = L.imageOverlay(leftImgUrl, bounds, { interactive: false, opacity: 1.0, zIndex: 400 }).addTo(map);
+      };
+
+      if (preserveAspect) {
+        // load image to get natural width/height and preserve pixel aspect ratio
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = leftImgUrl + (leftImgUrl.indexOf('?') === -1 ? '?_=' + Date.now() : '&_=' + Date.now());
+        img.onload = function() {
+          const imgW = img.naturalWidth || img.width;
+          const imgH = img.naturalHeight || img.height || 1;
+          const computedHUnits = Math.round(widthUnits * (imgH / imgW));
+          applyOverlay(computedHUnits);
+          // update the height input so the UI shows the computed value
+          document.getElementById('left-height-input').value = computedHUnits;
+        };
+        img.onerror = function() {
+          // fallback: use MAIN_WIDTH_UNITS so overlay is visible even if image can't be fetched
+          applyOverlay(MAIN_WIDTH_UNITS);
+        };
+      } else {
+        // if heightUnits not provided, default to main vertical span (previous behaviour)
+        const h = (heightUnits === null || typeof heightUnits === 'undefined') ? MAIN_WIDTH_UNITS : Math.abs(heightUnits);
+        applyOverlay(h);
+      }
+    }
+
+    // wire the injected UI controls
+    const widthInput = document.getElementById('left-width-input');
+    const heightInput = document.getElementById('left-height-input');
+    const voffsetInput = document.getElementById('left-voffset-input');
+    const preserveCheck = document.getElementById('left-preserve-check');
+    const applyBtn = document.getElementById('left-apply-btn');
+    const centerBtn = document.getElementById('left-center-btn');
+
+    // Ensure the left controls are hidden (JS fallback in case CSS is overridden)
+    const leftControlsEl = document.getElementById('left-image-controls');
+    if (leftControlsEl) leftControlsEl.style.display = 'none';
+
+    applyBtn.onclick = () => {
+      const w = parseInt(widthInput.value, 10) || 6000;
+      const h = parseInt(heightInput.value, 10);
+      const vo = parseInt(voffsetInput.value, 10) || 0;
+      const preserve = preserveCheck.checked;
+      addLeftOverlay({ widthUnits: w, heightUnits: h, vOffsetUnits: vo, preserveAspect: preserve });
+    };
+
+    centerBtn.onclick = () => {
+      // calculates vertical offset that vertically centers the left image relative to the main image
+      const w = parseInt(widthInput.value, 10) || 6000;
+      // height to use for centering: prefer explicit height input, otherwise last computed height
+      const h = parseInt(heightInput.value, 10) || lastLeftHeightUnits || MAIN_WIDTH_UNITS;
+      const vOffset = Math.round((MAIN_WIDTH_UNITS - h) / 2);
+      voffsetInput.value = vOffset;
+      // apply immediately
+      addLeftOverlay({ widthUnits: w, heightUnits: h, vOffsetUnits: vOffset, preserveAspect: preserveCheck.checked });
+    };
+
+    // convenience: double/halve width on double-click of width input
+    widthInput.ondblclick = () => { widthInput.value = Math.round((parseInt(widthInput.value,10)||6000) * 2); applyBtn.click(); };
+    widthInput.oncontextmenu = (e) => { e.preventDefault(); widthInput.value = Math.max(1, Math.round((parseInt(widthInput.value,10)||6000) / 2)); applyBtn.click(); };
+
+    // initial add using previous defaults (matches your original behavior)
+    addLeftOverlay({ widthUnits: parseInt(widthInput.value,10)||6000, heightUnits: parseInt(heightInput.value,10) || MAIN_WIDTH_UNITS, vOffsetUnits: parseInt(voffsetInput.value,10)||0, preserveAspect: false });
+
+    // --- rest of your original script follows unchanged (icons, markers, sheet, coverage logic etc) ---
 
     const icons = {
       low:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-lo.png', iconSize:[19,19], iconAnchor:[9.5,19] }),
@@ -91,7 +224,6 @@
       }
       return false;
     }
-    // ------------------------------------------------
 
     document.getElementById('save-db').onclick = () => {
       const saveable = txList.map(tx => ({ id: tx.id, name: tx.name, stations: tx.stations, point: tx.point, latlng: tx.latlng }));
@@ -130,7 +262,6 @@
     });
 
     function createTX(data,load=false) {
-      // normalize incoming station directional flags (important for DB-loaded entries)
       if (data.stations && Array.isArray(data.stations)) {
         data.stations.forEach(s => {
           try {
@@ -216,22 +347,17 @@
       const hdr = table.insertRow();
       ['Freq','Name','PI','kW',''].forEach(t => { const th = document.createElement('th'); th.innerText = t; hdr.appendChild(th); });
 
-      // Decide per-row highlight/dim rules:
-      // If tx.highlightCriteria is set, use that. Otherwise use global filterPI/filterEIRP/filterFreq/filterStationName.
       let crit = tx.highlightCriteria || null;
       if (!crit) {
         if (filterStationName) crit = { type: 'name', value: filterStationName };
         else if (filterFreq) crit = { type: 'freq', value: filterFreq };
         else if (filterPI) crit = { type: 'pi', value: filterPI };
         else if (filterEIRP) crit = { type: 'eirp', value: filterEIRP };
-        else if (filterFreq || filterPI || filterEIRP) crit = { type: 'global', value: null }; // fallback global sentinel when any global filter active
+        else if (filterFreq || filterPI || filterEIRP) crit = { type: 'global', value: null };
       }
 
-      // Build rows
       tx.stations.forEach((s, i) => {
         const r = table.insertRow();
-
-        // Determine highlight/dim state for this station:
         let isMatch = true;
         if (crit) {
           if (crit.type === 'freq') {
@@ -252,29 +378,23 @@
           }
         }
 
-        // apply only background changes (no text color/bold)
         if (crit && isMatch) r.classList.add('highlight'); else if (crit && !isMatch) r.classList.add('dim');
 
         const freqCell = r.insertCell();
         const freqBtn = document.createElement('button');
         freqBtn.className = 'freq-btn';
-
-        // show frequency and small pol letter to the right (lowercase) with NO space between them
         const freqText = s.freq !== undefined ? String(s.freq) : '';
         const polText = (s.pol || '').toString().trim();
         freqBtn.innerHTML = '<span class="freq-val">' + freqText + '</span>' + (polText ? '<span class="pol">' + polText.charAt(0).toLowerCase() + '</span>' : '');
         freqBtn.setAttribute('aria-label', freqText + (polText ? polText.charAt(0).toLowerCase() : ''));
 
-        // mark freq button visually if current tx.highlightCriteria or global freq filter matches
         if ((tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq))
             || (filterFreq && Number(filterFreq) === Number(s.freq))) {
           freqBtn.classList.add('criteria');
         }
 
         freqBtn.onclick = () => {
-          // toggle coverage (existing behavior)
           toggleCoverageForStation(tx, i, freqBtn);
-          // toggle highlight criterion for this tx by freq
           if (tx.highlightCriteria && tx.highlightCriteria.type === 'freq' && Number(tx.highlightCriteria.value) === Number(s.freq)) {
             tx.highlightCriteria = null;
           } else {
@@ -287,7 +407,6 @@
 
         const nameCell = r.insertCell();
         nameCell.innerText = s.name || '';
-        // make the station name clickable: clicking it populates the station-filter and applies filters
         nameCell.className = 'station-name';
         nameCell.title = 'Click to filter by this station';
         nameCell.onclick = () => {
@@ -331,7 +450,6 @@
       const kwInput=prompt('kW:');
       const kw=parseFloat(kwInput);
 
-      // directional prompt (Y/N)
       const dirFlag = (prompt('Make this station directional? (Y/N)') || '').trim().toUpperCase();
       let directional = false, directionAngle = null;
       if (dirFlag === 'Y' || dirFlag === 'YES') {
@@ -413,7 +531,6 @@
       const dx = crsRx.x - crsTx.x, dy = crsRx.y - crsTx.y;
       const distKm = Math.sqrt(dx*dx + dy*dy) * 0.1;
       const distKmRounded = Math.round(distKm);
-      // azimuth: compute bearing from TX -> RX (0 = north, clockwise)
       const az = computeAzimuthCRS(crsTx, crsRx);
 
       tip.innerHTML = '';
@@ -476,7 +593,6 @@
         updateIcon(tx);
       });
 
-      // If a sheet is open, refresh it so the dim/highlight state reflects current global filters
       updateSheetIfOpen();
     }
 
@@ -506,9 +622,6 @@
 
     function degToRad(d){ return d * Math.PI/180; }
 
-    // createCoveragePolygon:
-    // - non-directional stations (directional === false) always get a regular slightly-jittered circle (no V/H special lobes)
-    // - directional stations get pol-specific shaping AND the focused rear bulge (placed at directionAngle + 180)
     function createCoveragePolygon(centerLatLng, radiusKm, tx, stationIndex, directional=false, directionAngle=null, segments = 64) {
       if (!radiusKm || radiusKm <= 0) return L.polygon([], {color:'blue', weight:2, opacity:0.6, fillOpacity:0.08});
 
@@ -520,38 +633,29 @@
       const latlngs = [];
       const R = radiusKm;
 
-      // normalize directionAngle if provided
       let dirAngle = null;
       if (typeof directionAngle === 'number' && !isNaN(directionAngle)) {
         dirAngle = ((directionAngle % 360) + 360) % 360;
       }
 
-      // If directional, place bulge behind the TX: bulgeDir = dirAngle + 180 (mod 360)
-      // Only compute bulgeDir when directional === true and dirAngle exists.
       const bulgeDir = (directional === true && dirAngle !== null) ? ((dirAngle + 180) % 360) : null;
 
-      // tunables:
-      const coneDeg = 30;      // half-angle for the focused rear bulge (±coneDeg)
-      const maxBias  = 0.40;   // up to +40% at exact rear
-      const smallJitterRange = 0.06; // ±3% per-vertex jitter for non-directional / sides
+      const coneDeg = 30;
+      const maxBias  = 0.40;
+      const smallJitterRange = 0.06;
 
       for (let i = 0; i < segments; i++) {
         const a = (i / segments) * Math.PI * 2; // 0 = east, ccw positive
         const angleDeg = (90 - (a * 180 / Math.PI) + 360) % 360; // 0 = north, clockwise
 
-        // compute baseRadius:
-        // - If NOT directional: keep baseRadius as a simple circular R (no V/H special lobes).
-        // - If directional: apply pol-specific modulation (C/H/V) as before.
         let baseRadius = R;
         let pol = null;
         try { const s = tx.stations && tx.stations[stationIndex]; if (s && s.pol) pol = String(s.pol).toUpperCase(); } catch (e) { pol = null; }
 
         if (directional === true) {
-          // directional: allow polarization-specific shaping
           if (pol === 'C' || pol === 'O') {
             baseRadius = R;
           } else if (pol === 'H') {
-            // H -> slightly uneven octagon
             const nearestVertex = Math.round(angleDeg / 45) * 45;
             let delta = Math.abs(((angleDeg - nearestVertex + 540) % 360) - 180);
             if (delta > 180) delta = 360 - delta;
@@ -573,33 +677,29 @@
             baseRadius = R;
           }
 
-          // directional front/back smoothing (unchanged)
           if (dirAngle !== null) {
-            let delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180); // 0 = front, 180 = back
+            let delta = Math.abs(((angleDeg - dirAngle + 540) % 360) - 180);
             const t = (Math.cos(degToRad(delta)) + 1) / 2;
             const backMin = 0.2 * R;
             baseRadius = backMin + (baseRadius - backMin) * t;
           }
         } else {
-          // NOT directional -> force circular base radius (no pol lobes)
           baseRadius = R;
         }
 
-        // default small jitter applied to all stations (C/H/V get slight unevenness even when non-directional)
-        const defaultJitter = 1 + (rnd() - 0.5) * smallJitterRange; // e.g. ±3%
+        const defaultJitter = 1 + (rnd() - 0.5) * smallJitterRange;
 
-        // apply REAR bulge ONLY when directional === true and bulgeDir exists
         let perturb = defaultJitter;
         if (directional === true && bulgeDir !== null) {
           const raw = Math.abs(((angleDeg - bulgeDir + 360) % 360));
-          const angDiff = Math.min(raw, 360 - raw); // 0..180 where 0 = exact rear
+          const angDiff = Math.min(raw, 360 - raw);
 
           if (angDiff <= coneDeg) {
-            const frac = 1 - (angDiff / coneDeg); // 1 at center, 0 at cone edge
+            const frac = 1 - (angDiff / coneDeg);
             let biasMain = frac;
 
             let combinedFrac = biasMain;
-            const dblChance = 0.35; // ~35% of bulges become double-bulges
+            const dblChance = 0.35;
             if (rnd() < dblChance) {
               const offset = 8 + Math.floor(rnd() * 11);
               const raw2 = Math.abs(((angleDeg - (bulgeDir + offset) + 360) % 360));
@@ -610,7 +710,7 @@
             }
 
             const bias = 1 + maxBias * combinedFrac;
-            const localJitter = 1 + (rnd() - 0.5) * 0.08; // ±4%
+            const localJitter = 1 + (rnd() - 0.5) * 0.08;
             perturb = bias * localJitter;
           } else {
             perturb = defaultJitter;
@@ -621,7 +721,6 @@
 
         const r = Math.max(0.1, baseRadius * perturb);
 
-        // convert r (km) to CRS units (CRS uses 0.1 km per unit)
         const dx = Math.cos(a) * r * 10;
         const dy = Math.sin(a) * r * 10;
         const ptCRS = L.point(centerCRS.x + dx, centerCRS.y + dy);
@@ -644,7 +743,6 @@
       if (!s) return;
       const kw = Number(s.kw) || 0;
       const radiusKm = kW_to_km_radius(kw);
-      // remove existing
       if (tx.stationCircles && tx.stationCircles[stationIndex]) {
         try { map.removeLayer(tx.stationCircles[stationIndex].layer); } catch (e) {}
         delete tx.stationCircles[stationIndex];
@@ -652,10 +750,7 @@
         return;
       }
 
-      // normalize directional flag for this station (handles 'Y'/'N' from DB)
       const dirFlag = isDirectionalFlag(s.directional);
-
-      // create polygon using TX-level seeded shape (same EIRP -> same shape), but allow directional modification per-station
       const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, stationIndex, dirFlag, s.directionAngle);
       poly.addTo(map);
       tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s.directionAngle };
@@ -688,12 +783,10 @@
       });
     }
 
-    // refresh open sheet if any
     function updateSheetIfOpen() {
       if (!currentOpenTx) return;
       const tx = txList.find(t => t.id === currentOpenTx);
       if (tx) {
-        // If there are global filters or station name filter and tx doesn't have a tx.highlightCriteria, set sentinel so sheet dims/highlights
         if (!tx.highlightCriteria && (filterPI || filterEIRP || filterFreq || filterStationName)) {
           tx.highlightCriteria = { type: 'global', value: null };
           const prev = tx.highlightCriteria;
