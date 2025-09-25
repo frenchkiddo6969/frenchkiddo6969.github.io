@@ -77,37 +77,30 @@
   window.onload = function () {
     const map = L.map('map', { crs: L.CRS.Simple, minZoom: -5, maxZoom: 2, zoomSnap: 0.1 });
 
-    // --- NEW: create a dedicated pane for coverage polygons & trails so they appear ABOVE overlays ---
-    // choose a zIndex higher than the left overlay (which uses zIndex 400)
+    // --- PANES ---
     if (!map.getPane('coveragePane')) map.createPane('coveragePane');
-    map.getPane('coveragePane').style.zIndex = 650; // above overlays and markers
-    // allow pointer events if you want polygons clickable; set to 'none' if they'd block interactions
+    map.getPane('coveragePane').style.zIndex = 450;
     map.getPane('coveragePane').style.pointerEvents = 'auto';
 
-    // === CONFIG: where to place the extra left image ===
-    // main image original dimensions (CRS units used by the original file)
-    const MAIN_WIDTH_UNITS = 15904;   // original vertical span in your setup
-    const MAIN_HEIGHT_UNITS = 15968;  // original horizontal span in your setup
+    if (!map.getPane('trailPane')) map.createPane('trailPane');
+    map.getPane('trailPane').style.zIndex = 500;
+    map.getPane('trailPane').style.pointerEvents = 'auto';
 
-    // image URLs
+    // === CONFIG: where to place the extra left image ===
+    const MAIN_WIDTH_UNITS = 15904;
+    const MAIN_HEIGHT_UNITS = 15968;
+
     const mainImgUrl = 'https://i.soupco.net/u/JC4lap.png';
     const leftImgUrl = 'https://i.soupco.net/u/2MEaOg.png';
 
-    // main bounds remain exactly as before
     const mainBounds = [[0, 0], [MAIN_WIDTH_UNITS, MAIN_HEIGHT_UNITS]];
-
-    // add the main image overlay exactly as before and do NOT change its bounds
     const mainOverlay = L.imageOverlay(mainImgUrl, mainBounds, { interactive: false, opacity: 1.0, zIndex: 500 }).addTo(map);
 
-    // KEEP the fitBounds call on the main bounds so the map initial view focuses on the main image and
-    // the main image does not move. Users can pan left to see the extra image.
     map.fitBounds(mainBounds);
 
-    // left overlay handle (we will add and replace this dynamically)
     let leftOverlay = null;
-    let lastLeftHeightUnits = MAIN_WIDTH_UNITS; // default vertical span to match previous behaviour
+    let lastLeftHeightUnits = MAIN_WIDTH_UNITS;
 
-    // helper: remove previous left overlay if present
     function removeLeftOverlay() {
       if (leftOverlay) {
         try { map.removeLayer(leftOverlay); } catch (e) {}
@@ -115,26 +108,22 @@
       }
     }
 
-    // compute left bounds using the "first-coordinate-is-vertical" convention used previously
     function leftBoundsFromParams(widthUnits, heightUnits, vOffsetUnits) {
       const leftSouthWest = [vOffsetUnits, -Math.abs(widthUnits)];
       const leftNorthEast = [vOffsetUnits + Math.abs(heightUnits), 0];
       return [leftSouthWest, leftNorthEast];
     }
 
-    // add/update left overlay. If preserveAspect true, compute height from image pixel aspect ratio
     function addLeftOverlay({ widthUnits = 6000, heightUnits = null, vOffsetUnits = 0, preserveAspect = false } = {}) {
       removeLeftOverlay();
 
       const applyOverlay = (hUnits) => {
         lastLeftHeightUnits = hUnits;
         const bounds = leftBoundsFromParams(widthUnits, hUnits, vOffsetUnits);
-        // keep zIndex low (400) so coveragePane (650) sits above it
         leftOverlay = L.imageOverlay(leftImgUrl, bounds, { interactive: false, opacity: 1.0, zIndex: 400 }).addTo(map);
       };
 
       if (preserveAspect) {
-        // load image to get natural width/height and preserve pixel aspect ratio
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.src = leftImgUrl + (leftImgUrl.indexOf('?') === -1 ? '?_=' + Date.now() : '&_=' + Date.now());
@@ -143,21 +132,15 @@
           const imgH = img.naturalHeight || img.height || 1;
           const computedHUnits = Math.round(widthUnits * (imgH / imgW));
           applyOverlay(computedHUnits);
-          // update the height input so the UI shows the computed value
           document.getElementById('left-height-input').value = computedHUnits;
         };
-        img.onerror = function() {
-          // fallback: use MAIN_WIDTH_UNITS so overlay is visible even if image can't be fetched
-          applyOverlay(MAIN_WIDTH_UNITS);
-        };
+        img.onerror = function() { applyOverlay(MAIN_WIDTH_UNITS); };
       } else {
-        // if heightUnits not provided, default to main vertical span (previous behaviour)
         const h = (heightUnits === null || typeof heightUnits === 'undefined') ? MAIN_WIDTH_UNITS : Math.abs(heightUnits);
         applyOverlay(h);
       }
     }
 
-    // wire the injected UI controls
     const widthInput = document.getElementById('left-width-input');
     const heightInput = document.getElementById('left-height-input');
     const voffsetInput = document.getElementById('left-voffset-input');
@@ -165,7 +148,6 @@
     const applyBtn = document.getElementById('left-apply-btn');
     const centerBtn = document.getElementById('left-center-btn');
 
-    // Ensure the left controls are hidden (JS fallback in case CSS is overridden)
     const leftControlsEl = document.getElementById('left-image-controls');
     if (leftControlsEl) leftControlsEl.style.display = 'none';
 
@@ -178,29 +160,26 @@
     };
 
     centerBtn.onclick = () => {
-      // calculates vertical offset that vertically centers the left image relative to the main image
       const w = parseInt(widthInput.value, 10) || 6000;
-      // height to use for centering: prefer explicit height input, otherwise last computed height
       const h = parseInt(heightInput.value, 10) || lastLeftHeightUnits || MAIN_WIDTH_UNITS;
       const vOffset = Math.round((MAIN_WIDTH_UNITS - h) / 2);
       voffsetInput.value = vOffset;
-      // apply immediately
       addLeftOverlay({ widthUnits: w, heightUnits: h, vOffsetUnits: vOffset, preserveAspect: preserveCheck.checked });
     };
 
-    // convenience: double/halve width on double-click of width input
     widthInput.ondblclick = () => { widthInput.value = Math.round((parseInt(widthInput.value,10)||6000) * 2); applyBtn.click(); };
     widthInput.oncontextmenu = (e) => { e.preventDefault(); widthInput.value = Math.max(1, Math.round((parseInt(widthInput.value,10)||6000) / 2)); applyBtn.click(); };
 
-    // initial add using previous defaults (matches your original behavior)
     addLeftOverlay({ widthUnits: parseInt(widthInput.value,10)||6000, heightUnits: parseInt(heightInput.value,10) || MAIN_WIDTH_UNITS, vOffsetUnits: parseInt(voffsetInput.value,10)||0, preserveAspect: false });
 
-    // --- rest of your original script follows unchanged (icons, markers, sheet, coverage logic etc) ---
-
+    // --- ICONS (including selected variants) ---
     const icons = {
       low:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-lo.png', iconSize:[19,19], iconAnchor:[9.5,19] }),
       med:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-med.png', iconSize:[23,23], iconAnchor:[11.5,23] }),
       high: L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-hi.png', iconSize:[27,27], iconAnchor:[13.5,27] }),
+      lowSel:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-lo-sel.png', iconSize:[19,19], iconAnchor:[9.5,19] }),
+      medSel:  L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-med-sel.png', iconSize:[23,23], iconAnchor:[11.5,23] }),
+      highSel: L.icon({ iconUrl:'https://maps.fmdx.org/old/img/tx-hi-sel.png', iconSize:[27,27], iconAnchor:[13.5,27] }),
       rx:   L.icon({ iconUrl:'https://maps.fmdx.org/old/img/rx.png',    iconSize:[34,26], iconAnchor:[17,26] })
     };
 
@@ -221,7 +200,6 @@
       return ((theta + 360) % 360).toFixed(0);
     }
 
-    // ---- helper to normalize directional flags ----
     function isDirectionalFlag(val) {
       if (val === true) return true;
       if (val === false || val === null || typeof val === 'undefined') return false;
@@ -269,6 +247,19 @@
       addingTX=false; map.getContainer().style.cursor='';
     });
 
+    // helper to set selected visual state for a tx
+    function setSelected(tx, isSelected) {
+      if (!tx || !tx.marker) return;
+      if (isSelected) selected.add(tx.id); else selected.delete(tx.id);
+
+      const type = tx.iconType || 'lo';
+      let iconToUse = icons.low;
+      if (type === 'lo') iconToUse = isSelected ? icons.lowSel : icons.low;
+      else if (type === 'med') iconToUse = isSelected ? icons.medSel : icons.med;
+      else if (type === 'hi') iconToUse = isSelected ? icons.highSel : icons.high;
+      try { tx.marker.setIcon(iconToUse); } catch (e) {}
+    }
+
     function createTX(data,load=false) {
       if (data.stations && Array.isArray(data.stations)) {
         data.stations.forEach(s => {
@@ -289,37 +280,53 @@
 
       const latlng = data.latlng ? L.latLng(data.latlng[0], data.latlng[1]) : map.layerPointToLatLng(data.point);
       const crsPt = map.options.crs.project(latlng);
-      const marker = L.marker(latlng,{icon:icons.low,draggable:true}).addTo(map);
+      const marker = L.marker(latlng,{draggable:true}).addTo(map);
       const tx = {...data, marker, line: null, crs: crsPt, latlng: [latlng.lat, latlng.lng], stationCircles: {}, iconType: 'lo', highlightCriteria: null };
 
       if (tx.stations && tx.stations.length) {
         tx.stations.sort((a, b) => (Number(a.freq) || 0) - (Number(b.freq) || 0));
       }
 
-      txList.push(tx); updateIcon(tx); attach(tx);
+      txList.push(tx);
+      updateIcon(tx);
+      setSelected(tx, selected.has(tx.id));
+      attach(tx);
       if(load) marker.fire('add');
     }
 
     function attach(tx) {
       tx.marker.on('contextmenu', () => {
+        // Toggle trail but KEEP marker in normal (non-selected) icon state.
         if (tx.line) {
-          map.removeLayer(tx.line);
+          try { map.removeLayer(tx.line); } catch (e) {}
           tx.line = null;
-          selected.delete(tx.id);
+          // ensure normal (non-selected) icon after removing trail
+          setSelected(tx, false);
         } else {
           drawTrail(tx);
-          selected.add(tx.id);
+          // ensure normal (non-selected) icon when trail is created
+          setSelected(tx, false);
         }
       });
+
+      // LEFT-CLICK handler: open/close sheet AND toggle selection appropriately
       tx.marker.on('click', () => {
         if (sheet.style.display === 'block' && currentOpenTx === tx.id) {
+          // sheet open for this tx -> close and unselect
           sheet.style.display = 'none';
           currentOpenTx = null;
+          setSelected(tx, false);
         } else {
+          // opening sheet for this tx -> deselect all others, select this one
+          txList.forEach(t => {
+            if (t.id !== tx.id) setSelected(t, false);
+          });
+          setSelected(tx, true);
           sheet.style.display = 'block';
           openSheet(tx);
         }
       });
+
       tx.marker.on('dragend',()=>{ const ll=tx.marker.getLatLng(); tx.crs=map.options.crs.project(ll); if(tx.line) drawTrail(tx); updateCoverageForTX(tx); repositionTipIfNeeded(tx); });
       tx.marker.on('drag', ()=> repositionTipIfNeeded(tx));
       tx.marker.on('mouseover',()=>showTip(tx));
@@ -328,9 +335,8 @@
 
     function drawTrail(tx) {
       if(!rx) return;
-      if(tx.line) map.removeLayer(tx.line);
-      // ensure trail is drawn in coveragePane so it appears above image overlays
-      tx.line = L.polyline([rx.getLatLng(),tx.marker.getLatLng()],{color:'red',weight:2,opacity:0.7, pane: 'coveragePane'}).addTo(map);
+      if(tx.line) try { map.removeLayer(tx.line); } catch (e) {}
+      tx.line = L.polyline([rx.getLatLng(),tx.marker.getLatLng()],{color:'red',weight:2,opacity:0.7, pane: 'trailPane'}).addTo(map);
     }
 
     map.on('contextmenu',e=>{
@@ -446,7 +452,7 @@
 
       const add = document.createElement('button'); add.innerText='Add station'; add.onclick=()=>addStation(tx);
       const del = document.createElement('button'); del.innerText='Delete TX'; del.style.marginLeft='10px';
-      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); sheet.style.display='none'; currentOpenTx = null; };
+      del.onclick = () => { map.removeLayer(tx.marker); if(tx.line) map.removeLayer(tx.line); Object.values(tx.stationCircles||{}).forEach(c => { try{ map.removeLayer(c.layer); }catch{} }); txList = txList.filter(t => t.id !== tx.id); selected.delete(tx.id); sheet.style.display='none'; currentOpenTx = null; };
       sheet.append(table, add, del);
     }
 
@@ -521,9 +527,12 @@
       if (filteredStations.length) m = Math.max(...filteredStations.map(s => s.kw || 0));
       else if (!filterFreq && !filterPI && !filterEIRP && !filterStationName && tx.stations.length) m = Math.max(...tx.stations.map(s => s.kw || 0));
 
-      if (m >= 5) { tx.marker.setIcon(icons.high); tx.iconType = 'hi'; }
-      else if (m >= 0.5) { tx.marker.setIcon(icons.med); tx.iconType = 'med'; }
-      else { tx.marker.setIcon(icons.low); tx.iconType = 'lo'; }
+      if (m >= 5) { tx.iconType = 'hi'; }
+      else if (m >= 0.5) { tx.iconType = 'med'; }
+      else { tx.iconType = 'lo'; }
+
+      // ensure selection state is respected after changing iconType
+      setSelected(tx, selected.has(tx.id));
     }
 
     const tip = document.createElement('div');
@@ -701,10 +710,9 @@
 
         let perturb;
         if (!pol) {
-          // no polarization specified -> use perfect (no jitter / no bias)
+          // no polarization specified -> perfect circle
           perturb = 1;
         } else {
-          // if directional and bulge area, bias outward; otherwise keep local jitter
           if (directional === true && bulgeDir !== null) {
             const raw = Math.abs(((angleDeg - bulgeDir + 360) % 360));
             const angDiff = Math.min(raw, 360 - raw);
@@ -741,7 +749,6 @@
         latlngs.push(map.options.crs.unproject(ptCRS));
       }
 
-      // ensure polygon goes into our coverage pane so it renders above the left overlay
       return L.polygon(latlngs, { pane: 'coveragePane', color: 'blue', weight: 2, opacity: 0.6, fillOpacity: 0.08 });
     }
 
@@ -766,7 +773,6 @@
       }
 
       const dirFlag = isDirectionalFlag(s.directional);
-      // create polygon in the coveragePane (so it sits above left overlay)
       const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, stationIndex, dirFlag, s.directionAngle);
       poly.addTo(map);
       tx.stationCircles[stationIndex] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s.directionAngle };
@@ -782,7 +788,6 @@
         const s = tx.stations[idx];
         const radiusKm = sc.km || (s ? kW_to_km_radius(s.kw) : 0);
         const dirFlag = isDirectionalFlag(s ? s.directional : false);
-        // ensure polygon is placed in coveragePane
         const poly = createCoveragePolygon(tx.marker.getLatLng(), radiusKm, tx, idx, dirFlag, s && s.directionAngle);
         poly.addTo(map);
         tx.stationCircles[idx] = { layer: poly, km: radiusKm, centerLatLng: tx.marker.getLatLng(), directional: dirFlag, directionAngle: s && s.directionAngle };
