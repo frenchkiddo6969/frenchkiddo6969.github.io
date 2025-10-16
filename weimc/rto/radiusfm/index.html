@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RTO Radius FM</title>
+  <link rel="icon" href="https://radiusfm.by/favicon-32x32.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      /* Dark-mode palette */
+      --bg:#071017;               /* page background */
+      --surface:#0f1720;          /* cards, panels */
+      --muted:#9fb0bb;            /* secondary text */
+      --text:#e6f2f6;             /* primary text */
+      --accent:#ff6db1;          /* primary accent (play button) */
+      --teal:#3ec2b4;            /* section title / highlights */
+      --card-shadow:0 10px 30px rgba(2,8,12,0.6);
+      --glass:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      font-family:'Rubik',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;
+    }
+
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+
+    /* Layout */
+    .wrap{display:flex;min-height:100vh;gap:20px}
+    .topbar{background:transparent;padding:12px 18px;display:flex;align-items:center;gap:12px}
+    .topbar img{height:48px;display:block;filter:brightness(1.05) saturate(1.1)}
+    .topbar .title{font-weight:800;color:var(--text)}
+
+    /* Sidebar */
+    .sidebar{width:260px;background:var(--surface);border-radius:12px;margin:18px;box-shadow:var(--card-shadow);padding:18px;display:flex;flex-direction:column;gap:14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .now-host{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .host-photo{width:160px;height:160px;border-radius:12px;object-fit:cover;background:#0b1220}
+
+    .player-controls{display:flex;align-items:center;gap:10px;width:100%}
+    .play-btn{width:64px;height:64px;border-radius:50%;display:inline-grid;place-items:center;background:var(--accent);color:var(--surface);font-size:20px;border:none;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,0.4)}
+    .play-btn[aria-pressed="true"]{background:#de4f95;transform:translateY(1px)}
+
+    .thumbs{display:flex;gap:8px;align-items:center}
+    .thumbs button{border:0;background:transparent;cursor:pointer;font-size:20px;color:var(--muted)}
+    .volume{flex:1}
+    .volume input[type=range]{width:100%}
+    .muted-note{font-size:12px;color:var(--muted);text-align:center}
+
+    /* Main */
+    .main{flex:1;margin:18px}
+    .hero{background:linear-gradient(90deg,#073b54 0%,#0b5e88 60%);height:220px;border-radius:14px;color:var(--text);padding:18px;display:flex;align-items:center;gap:18px;overflow:hidden}
+    .hero .logo{width:220px;height:160px;object-fit:contain;border-radius:12px;background:var(--glass);display:flex;align-items:center;justify-content:center}
+    .hero .headline{font-size:28px;font-weight:800;color:var(--text)}
+    .hero .sub{color:rgba(230,242,246,0.9)}
+
+    .news-section{margin-top:18px}
+    .section-head{display:flex;justify-content:space-between;align-items:center}
+    .section-title{background:var(--teal);color:#042028;padding:8px 12px;border-radius:8px;font-weight:800}
+    .news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px}
+    .news-card{background:var(--surface);border-radius:12px;box-shadow:var(--card-shadow);overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.02)}
+    .news-card img{width:100%;height:140px;object-fit:cover;filter:brightness(0.95) saturate(1.05)}
+    .news-card .body{padding:12px}
+    .news-card h4{margin:0 0 8px;font-size:16px}
+    .news-card p{margin:0;color:var(--muted);font-size:14px}
+    .news-card a{color:var(--accent);text-decoration:none}
+
+    /* Right column */
+    .rightcol{width:320px;margin:18px}
+    .weather-box{background:var(--surface);border-radius:12px;padding:16px;box-shadow:var(--card-shadow);border:1px solid rgba(255,255,255,0.02)}
+    .weather-top{display:flex;align-items:center;gap:12px}
+    .weather-icon{width:64px;height:64px;display:inline-block;color:var(--text)}
+    .weather-icon svg{width:100%;height:100%;display:block}
+    .weather-temp{font-weight:800;font-size:28px;color:var(--text)}
+    .weather-desc{color:var(--muted)}
+
+    footer{margin:0 18px 30px 18px;color:var(--muted)}
+
+    @media (max-width:1100px){.news-grid{grid-template-columns:1fr 1fr}.rightcol{display:none}}
+    @media (max-width:760px){.wrap{flex-direction:column}.sidebar{width:auto;margin:12px}.rightcol{display:none}}
+
+    /* small tweaks */
+    a{color:var(--accent)}
+    .topbar .title{letter-spacing:0.2px}
+  </style>
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <img id="site-logo-header" src="" alt="logo">
+    <div class="title"> </div>
+  </header>
+
+  <div class="wrap">
+    <aside class="sidebar" aria-label="Barre latérale du lecteur">
+      <div class="now-host">
+        <div class="player-controls">
+          <button id="playBtnLeft" class="play-btn" aria-label="Lire / Pause" aria-pressed="false">▶</button>
+          <div style="flex:1">
+            <div id="now-title-left" style="font-weight:800">—</div>
+            <div id="now-sub-left" style="color:var(--muted);font-weight:600;display:none">&nbsp;</div>
+          </div>
+        </div>
+
+        <div class="volume">
+          <audio id="audioPlayer" src="https://radio.soupco.net:8443/rtoradiusfm" preload="none"></audio>
+          <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+        </div>
+
+        <div class="thumbs" style="width:100%;justify-content:space-between;padding-top:8px">
+          <div style="display:flex;gap:8px"><button title="Je n'aime pas">👎</button><button title="J'aime">👍</button></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="hero">
+        <div style="width:100%;display:flex;align-items:center;gap:18px;justify-content:flex-start">
+          <div style="flex:1">
+            <div class="headline">RTO Radius FM</div>
+            <div class="sub">100% Hitov!</div>
+          </div>
+        </div>
+      </div>
+
+      <section class="news-section">
+        <div class="section-head">
+          <div class="section-title">Actualités</div>
+          <div style="color:var(--muted);font-weight:600">Source : France24</div>
+        </div>
+        <div id="newsContainer" class="news-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <aside class="rightcol">
+      <div class="weather-box">
+        <div style="display:flex;justify-content:space-between;align-items:center"><strong>Narbonne</strong><div id="weather-update" style="font-size:12px;color:var(--muted)"></div></div>
+        <div style="height:8px"></div>
+        <div class="weather-top">
+          <div id="weather-icon-top" class="weather-icon" aria-hidden="true"></div>
+          <div>
+            <div class="weather-temp" id="weather-text-top">--°C</div>
+            <div class="weather-desc" id="weather-desc-top">Chargement...</div>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div style="font-size:13px;color:var(--muted)">Les prévisions se mettent à jour automatiquement.</div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    <div style="max-width:1200px;margin:10px auto;padding:0 18px;color:var(--muted)">© Radio-Télévision Occitane</div>
+  </footer>
+
+  <script>
+  // === Configuration ===
+  const STREAM_URL = 'https://radio.soupco.net:8443/rtoradiusfm';
+  const LOGO_MAIN = 'https://i.soupco.net/u/wFwY4y.png';
+  const RSS_URL = 'https://www.france24.com/fr/rss';
+  const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=43.1844&longitude=3.0058&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh';
+
+  // === DOM refs ===
+  const $ = s => document.querySelector(s);
+  const audio = $('#audioPlayer');
+  const playBtnLeft = $('#playBtnLeft');
+  const volumeSlider = $('#volumeSlider');
+  const nowTitleLeft = $('#now-title-left');
+  const nowSubLeft = $('#now-sub-left');
+  const newsContainer = $('#newsContainer');
+  const weatherTextTop = $('#weather-text-top');
+  const weatherDescTop = $('#weather-desc-top');
+  const weatherIconTop = $('#weather-icon-top');
+  const hdrLogo = document.getElementById('site-logo-header');
+
+  if (hdrLogo) hdrLogo.src = LOGO_MAIN;
+
+  // === Audio player wiring ===
+  audio.src = STREAM_URL;
+  audio.crossOrigin = 'anonymous';
+  let isPlaying = false;
+
+  async function togglePlay(){
+    if(!isPlaying){
+      try{ await audio.play(); isPlaying = true; playBtnLeft.textContent = '❚❚'; playBtnLeft.setAttribute('aria-pressed','true'); }
+      catch(err){ console.warn('Play failed', err); }
+    } else {
+      audio.pause(); isPlaying = false; playBtnLeft.textContent = '▶'; playBtnLeft.setAttribute('aria-pressed','false');
+    }
+  }
+
+  playBtnLeft.addEventListener('click', togglePlay);
+  playBtnLeft.addEventListener('keydown', (e)=>{ if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); togglePlay(); } });
+
+  volumeSlider.addEventListener('input', ()=>{ audio.volume = parseFloat(volumeSlider.value); });
+  audio.volume = parseFloat(volumeSlider.value || 1);
+
+  // === Helpers textes & correction d'encodage ===
+  function containsCyrillic(s){ try{ return /\p{Script=Cyrillic}/u.test(s); } catch(e){ return /[А-Яа-яЁё]/.test(s); } }
+
+  function looksLikeMojibake(s){ if(!s||typeof s!=='string') return false; if(containsCyrillic(s)) return false; if(/[À-ÿ]/.test(s) && /[ÃÐÂ]/.test(s)) return true; if(/Ã[A-Za-z\u00A0-\u00BF]/.test(s)) return true; return false; }
+
+  function toBytesFromVisibleChars(str){ return new Uint8Array([...str].map(ch=>ch.charCodeAt(0)&0xFF)); }
+
+  function tryDecode(bytes, enc){ try{ return new TextDecoder(enc).decode(bytes); } catch(e){ return null; } }
+
+  function fixMojibake(s){ if(!s||typeof s!=='string') return s; if(containsCyrillic(s)) return s; if(!looksLikeMojibake(s)) return s; const bytes = toBytesFromVisibleChars(s); const viaUtf8 = tryDecode(bytes,'utf-8'); if(viaUtf8 && (containsCyrillic(viaUtf8) || /[^\u0000-\u007f]/.test(viaUtf8))) return viaUtf8; const viaWin1251 = tryDecode(bytes,'windows-1251'); if(viaWin1251 && containsCyrillic(viaWin1251)) return viaWin1251; if(viaUtf8) return viaUtf8; if(viaWin1251) return viaWin1251; return s; }
+
+  function escapeHtml(str){ if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // === Icecast now-playing/status (si disponible) ===
+  const STATUS_URL = (()=>{ try{ const u = new URL(STREAM_URL); return u.origin + '/status-json.xsl'; } catch(e){ return ''; } })();
+
+  async function fetchNowPlaying(){
+    if(!STATUS_URL) return;
+    try{
+      const res = await fetch(STATUS_URL, {cache: 'no-store'});
+      if(!res.ok) throw new Error('status fetch failed');
+      const buf = await res.arrayBuffer();
+      let txt = new TextDecoder('utf-8').decode(buf);
+      let data = null;
+
+      try{ data = JSON.parse(txt); } catch(e){
+        const fallbacks = ['windows-1251','iso-8859-1'];
+        for(const enc of fallbacks){ try{ txt = new TextDecoder(enc).decode(buf); data = JSON.parse(txt); break; } catch(_){} }
+      }
+
+      if(!data) throw new Error('Could not parse status JSON');
+
+      const icestats = data.icestats || {};
+      let sources = icestats.source || null;
+      let src = null;
+      if(Array.isArray(sources)){
+        src = sources.find(s=> (s.listenurl && s.listenurl.includes('rtoradiusfm')) || (s.mount && s.mount.includes('rtoradiusfm')) ) || sources[0];
+      } else if(sources){ src = sources; }
+
+      if(src){
+        const rawTitle = src.title || src.server_name || '';
+        const rawArtist = src.artist || src.song || '';
+        const t0 = String(rawTitle || rawArtist || '');
+        const title = fixMojibake(t0) || '—';
+        nowTitleLeft.textContent = title;
+
+        const descRaw = src.server_description || src.genre || '';
+        const desc = (function(d){ if(!d) return ''; const s = String(d).trim(); const bad = /unspecified description|unspecified|unknown|n\/a|none/i; return bad.test(s) ? '' : s; })(descRaw);
+        nowSubLeft.textContent = fixMojibake(desc);
+        nowSubLeft.style.display = nowSubLeft.textContent.trim() ? '' : 'none';
+      }
+    } catch(e){ console.warn('Could not fetch now playing', e); }
+  }
+
+  fetchNowPlaying();
+  setInterval(fetchNowPlaying, 15 * 1000);
+
+  // === Actualités (RSS) ===
+  async function fetchNews(){
+    const proxyCandidates = [
+      'https://api.allorigins.win/raw?url=',
+      'https://api.allorigins.win/get?url=',
+      'https://thingproxy.freeboard.io/fetch/',
+      'https://cors.bridged.cc/'
+    ];
+
+    let doc = null;
+
+    for (const proxy of proxyCandidates){
+      try {
+        const res = await fetch(proxy + encodeURIComponent(RSS_URL), { cache: 'no-store' });
+        if (!res.ok) { continue; }
+
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        let xmlText = null;
+
+        if (proxy.includes('/get?') && contentType.includes('application/json')) {
+          const js = await res.json();
+          xmlText = typeof js.contents === 'string' ? js.contents : JSON.stringify(js);
+        } else {
+          xmlText = await res.text();
+        }
+
+        if (!xmlText) { continue; }
+
+        const parsed = new DOMParser().parseFromString(xmlText, 'text/xml');
+        if (parsed && parsed.querySelectorAll('item').length > 0) {
+          doc = parsed;
+          break;
+        }
+      } catch (err) { continue; }
+    }
+
+    if (!doc) {
+      try {
+        const r2 = await fetch(RSS_URL, { cache: 'no-store' });
+        if (r2.ok) {
+          const t = await r2.text();
+          const parsedDirect = new DOMParser().parseFromString(t, 'text/xml');
+          if (parsedDirect && parsedDirect.querySelectorAll('item').length > 0) {
+            doc = parsedDirect;
+          } else {
+            const directBuf = await r2.arrayBuffer();
+            const fallbacks = ['utf-8','windows-1251','iso-8859-1'];
+            for(const enc of fallbacks){
+              try{
+                const dec = new TextDecoder(enc).decode(directBuf);
+                const altDoc = new DOMParser().parseFromString(dec, 'text/xml');
+                if(altDoc && altDoc.querySelectorAll('item').length>0){ doc = altDoc; break; }
+              } catch(_) {}
+            }
+          }
+        }
+      } catch (err) { }
+    }
+
+    if (!doc) return;
+
+    const items = Array.from(doc.querySelectorAll('item')).slice(0,6);
+    if(items.length === 0) return;
+
+    let html = '';
+    for(const it of items){
+      const tRaw = it.querySelector('title')?.textContent || '';
+      const dRaw = it.querySelector('description')?.textContent || '';
+      const l = it.querySelector('link')?.textContent || '#';
+      const imEl = it.querySelector('enclosure') || it.querySelector('media\\:content') || it.querySelector('media\\:thumbnail');
+      const im = imEl ? (imEl.getAttribute('url') || '') : ('https://picsum.photos/800/480?random=' + Math.floor(Math.random()*1000));
+
+      const t = escapeHtml(fixMojibake(tRaw)).slice(0,200);
+      const d = escapeHtml(fixMojibake((dRaw || '').replace(/<[^>]+>/g,''))).slice(0,140);
+
+      html += `\n<article class="news-card">\n  <a href="${escapeHtml(l)}" target="_blank" rel="noopener noreferrer">\n    <img src="${im}" alt="image actualité">\n  </a>\n  <div class="body">\n    <h4><a href="${escapeHtml(l)}" target="_blank" rel="noopener noreferrer">${t}</a></h4>\n    <p>${d}${d.length >= 140 ? '...' : ''}</p>\n  </div>\n</article>`;
+    }
+
+    newsContainer.innerHTML = html;
+  }
+
+  fetchNews();
+  setInterval(fetchNews, 10 * 60 * 1000);
+
+  // === Weather icons using currentColor so they adapt to theme ===
+  function getWeatherIconSVG(code){
+    const sun = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="4"/></g></svg>`;
+    const cloud = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/></svg>`;
+    const sunCloud = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-hidden="true"><g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="8.5" cy="7.5" r="3"/></g><path fill="currentColor" d="M27 15.5A3.5 3.5 0 0 0 23.5 12H23a4 4 0 0 0-7.9.9A3 3 0 0 0 12 16.9 3 3 0 0 0 15 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/></svg>`;
+    const rain = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g fill="currentColor"><path d="M9 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1zM15 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1zM12 21c0 .6-.9 1-1 1s-1-.4-1-1 .9-1 1-1 1 .4 1 1z"/></g></svg>`;
+    const snow = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="12" y1="17" x2="12" y2="21"/><line x1="10" y1="19" x2="14" y2="19"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="10" y1="5" x2="14" y2="5"/></g></svg>`;
+    const thunder = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="currentColor" d="M19 15.5A3.5 3.5 0 0 0 15.5 12H15a4 4 0 0 0-7.9.9A3 3 0 0 0 4 16.9 3 3 0 0 0 7 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><path fill="currentColor" d="M11 14l-1 5 5-6h-4l1-8-5 6z"/></svg>`;
+    const fog = `\n      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-hidden="true"><path fill="currentColor" d="M27 15.5A3.5 3.5 0 0 0 23.5 12H23a4 4 0 0 0-7.9.9A3 3 0 0 0 12 16.9 3 3 0 0 0 15 20h11a1 1 0 0 0 1-1a3.5 3.5 0 0 0 0-3.5z"/><g fill="currentColor"><rect x="4" y="4" width="16" height="0" /><rect x="4" y="18" width="16" height="0" /><rect x="6" y="16" width="12" height="1"/><rect x="6" y="20" width="12" height="1"/></g></svg>`;
+
+    if (code === 0 || code === 1) return sun;
+    if (code === 2) return sunCloud;
+    if (code === 3) return cloud;
+    if ([45,48].includes(code)) return fog;
+    if ([51,53,55,61,63,65].includes(code)) return rain;
+    if ([71,73,75].includes(code)) return snow;
+    if (code === 95) return thunder;
+    return cloud;
+  }
+
+  async function fetchWeather(){
+    try{
+      const res = await fetch(WEATHER_URL, {cache:'no-store'});
+      if(!res.ok) throw new Error('weather fetch failed');
+      const js = await res.json();
+      const w = js.current_weather;
+      if(!w) return;
+      const temp = w.temperature;
+      const code = w.weathercode;
+      const desc = weatherCodeToText(code);
+
+      if(weatherTextTop) weatherTextTop.textContent = `${Number(temp).toFixed(1)}°C`;
+      if(weatherDescTop) weatherDescTop.textContent = desc;
+      if(weatherIconTop) weatherIconTop.innerHTML = getWeatherIconSVG(code);
+      const upd = new Date().toLocaleTimeString('fr-FR');
+      if(document.getElementById('weather-update')) document.getElementById('weather-update').textContent = `mis à jour ${upd}`;
+    } catch(e){ console.warn('Could not fetch weather', e); if(weatherTextTop) weatherTextTop.textContent='--°C'; if(weatherDescTop) weatherDescTop.textContent=''; if(weatherIconTop) weatherIconTop.innerHTML = ''; }
+  }
+
+  function weatherCodeToText(code){
+    const map = {0:'Dégagé',1:'Ciel principalement dégagé',2:'Nuageux par endroits',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine légère',53:'Bruine modérée',55:'Bruine forte',61:'Pluie faible',63:'Pluie modérée',65:'Pluie forte',71:'Neige légère',73:'Neige modérée',75:'Neige forte',95:'Orage'};
+    return map[code] || 'Météo';
+  }
+
+  fetchWeather();
+  setInterval(fetchWeather, 15 * 60 * 1000);
+
+  console.info('Stream:',STREAM_URL,'Status:',STATUS_URL,'News:',RSS_URL);
+  </script>
+</body>
+</html>
